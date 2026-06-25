@@ -80,6 +80,8 @@ GET    /v1/rides/{ride_id}            # Poll trip status & live location
 
 Live tracking uses a **persistent WebSocket connection** rather than polling, pushing location and status changes to both apps.
 
+> 📊 See the full ride lifecycle in the [sequence diagram](./diagrams/sequence-ride-flow.md).
+
 ---
 
 ## 6. High-Level Architecture
