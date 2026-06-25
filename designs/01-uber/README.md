@@ -118,6 +118,8 @@ graph TD
 - **Notification Service** — pushes real-time updates to apps over WebSocket.
 - **Payment Service** — fare calculation and payment processing on completion.
 
+> 📊 For the full picture — connection fleet, regional sharding, pub/sub fan-out, and the isolated location firehose — see the [detailed architecture diagram](./diagrams/architecture.md).
+
 ---
 
 ## 7. Data Model
