@@ -59,7 +59,16 @@ Each design follows a consistent structure so they are easy to compare and revis
 
 ## 🛠️ Tools & Conventions
 
-- **Diagrams** — drawn with [Mermaid](https://mermaid.js.org/) (renders directly in Markdown) or [Excalidraw](https://excalidraw.com/) for richer sketches.
+- **Diagrams** — drawn with [Mermaid](https://mermaid.js.org/), which renders natively on GitHub. House style is the hand-drawn look with the ELK layout engine:
+
+  ```
+  ---
+  config:
+    look: handDrawn
+    layout: elk
+    theme: neutral
+  ---
+  ```
 - **Language** — all write-ups are in British English.
 - **Format** — Markdown throughout, kept readable on GitHub.
 

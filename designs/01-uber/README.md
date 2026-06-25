@@ -87,7 +87,13 @@ Live tracking uses a **persistent WebSocket connection** rather than polling, pu
 ## 6. High-Level Architecture
 
 ```mermaid
-graph TD
+---
+config:
+  look: handDrawn
+  layout: elk
+  theme: neutral
+---
+flowchart TD
     R[Rider App] -->|request ride| GW[API Gateway]
     D[Driver App] -->|location pings| GW
 
