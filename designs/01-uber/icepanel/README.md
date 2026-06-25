@@ -28,15 +28,11 @@ This folder holds the script that builds the Uber architecture as a **C4 model**
 
 ## Running it
 
-Pass the secrets via environment variables — **never commit them**:
+Fill in [`.env`](./.env) (gitignored — copied from [`.env.example`](./.env.example)), then run with Node's built-in `--env-file` (Node 20.6+):
 
 ```bash
 cd designs/01-uber/icepanel
-
-export ICEPANEL_API_KEY='your-key-here'
-export ICEPANEL_LANDSCAPE_ID='your-landscape-id'
-
-node build-landscape.mjs
+node --env-file=.env build-landscape.mjs
 ```
 
 Then, in IcePanel: open the *Uber Platform — Containers* diagram, adjust the layout if needed, and:
