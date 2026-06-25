@@ -107,13 +107,29 @@ const connId = {};   // "origin->target" -> model connection id
 async function main() {
   console.log(`→ Landscape ${LANDSCAPE} (version: ${VERSION})\n`);
 
-  // 1. Model objects (parents before children so parentId resolves)
-  console.log('Creating model objects…');
+  const asList = (res, key) =>
+    Array.isArray(res[key]) ? res[key] : Object.values(res[key] || res);
+
+  // 0. Find the landscape root object — top-level objects parent to it.
+  const existingObjs = asList(await api('GET', '/model/objects'), 'modelObjects');
+  const root = existingObjs.find((o) => o.type === 'root');
+  if (!root) throw new Error('Could not find the root model object.');
+  console.log(`Root object: ${root.id}\n`);
+
+  // 1. Model objects — reuse by name if present, else create (idempotent).
+  const byName = new Map(existingObjs.map((o) => [o.name, o]));
+  console.log('Model objects…');
   for (const o of OBJECTS) {
+    const found = byName.get(o.name);
+    if (found) {
+      id[o.key] = found.id;
+      console.log(`  • ${o.name} (exists)`);
+      continue;
+    }
     const body = {
       name: o.name,
       type: o.type,
-      parentId: o.parent ? id[o.parent] : null,
+      parentId: o.top ? root.id : id[o.parent],
       external: !!o.external,
     };
     if (o.tech) body.caption = o.tech;
@@ -122,9 +138,19 @@ async function main() {
     console.log(`  ✓ ${o.name} (${o.type})`);
   }
 
-  // 2. Connections
-  console.log('\nCreating connections…');
+  // 2. Connections — skip if an identical origin→target already exists.
+  const existingConns = asList(await api('GET', '/model/connections'), 'modelConnections');
+  const connKey = (oId, tId) => `${oId}|${tId}`;
+  const seenConns = new Map(existingConns.map((c) => [connKey(c.originId, c.targetId), c]));
+  console.log('\nConnections…');
   for (const [from, to, name, dir] of CONNECTIONS) {
+    const k = connKey(id[from], id[to]);
+    const found = seenConns.get(k);
+    if (found) {
+      connId[`${from}->${to}`] = found.id;
+      console.log(`  • ${from} → ${to} (exists)`);
+      continue;
+    }
     const res = await api('POST', '/model/connections', {
       originId: id[from],
       targetId: id[to],
@@ -135,15 +161,17 @@ async function main() {
     console.log(`  ✓ ${from} → ${to}${name ? ` (${name})` : ''}`);
   }
 
-  // 3. Container diagram for Uber Platform
-  console.log('\nCreating container diagram…');
-  const diag = await api('POST', '/diagrams', {
-    name: 'Uber Platform — Containers',
-    type: 'app-diagram',
-    modelId: id.uber,
-    index: 0,
-  });
-  const diagramId = diag.diagram.id;
+  // 3. Container diagram for Uber Platform — reuse if it already exists.
+  console.log('\nContainer diagram…');
+  const DIAG_NAME = 'Uber Platform — Containers';
+  const existingDiags = asList(await api('GET', '/diagrams'), 'diagrams');
+  let diagramId = existingDiags.find((d) => d.name === DIAG_NAME)?.id;
+  if (!diagramId) {
+    const diag = await api('POST', '/diagrams', {
+      name: DIAG_NAME, type: 'app-diagram', modelId: id.uber, index: 0,
+    });
+    diagramId = diag.diagram.id;
+  }
 
   // 4. Place objects on the diagram (content id == model object id)
   const placedKeys = OBJECTS.filter((o) => o.place !== false);
@@ -165,8 +193,8 @@ async function main() {
     connectionsAdd[cid] = {
       id: cid, modelId: cid,
       originId: id[from], targetId: id[to],
-      originConnector: 'bottom-middle', targetConnector: 'top-middle',
-      lineShape: 'curved', points: [],
+      originConnector: 'bottom-center', targetConnector: 'top-center',
+      labelPosition: 0.5, lineShape: 'curved', points: [],
     };
   }
 
