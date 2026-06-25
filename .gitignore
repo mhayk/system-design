@@ -1,0 +1,10 @@
+# Secrets — never commit credentials
+.env
+.env.*
+*.local
+
+# IcePanel / tooling
+node_modules/
+
+# OS
+.DS_Store
