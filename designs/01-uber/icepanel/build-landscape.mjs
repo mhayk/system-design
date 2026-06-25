@@ -163,18 +163,21 @@ async function main() {
 
   // 3. Container diagram for Uber Platform — reuse if it already exists.
   console.log('\nContainer diagram…');
+  // Recreate the diagram from scratch each run so content stays clean.
   const DIAG_NAME = 'Uber Platform — Containers';
   const existingDiags = asList(await api('GET', '/diagrams'), 'diagrams');
-  let diagramId = existingDiags.find((d) => d.name === DIAG_NAME)?.id;
-  if (!diagramId) {
-    const diag = await api('POST', '/diagrams', {
-      name: DIAG_NAME, type: 'app-diagram', modelId: id.uber, index: 0,
-    });
-    diagramId = diag.diagram.id;
-  }
+  const stale = existingDiags.find((d) => d.name === DIAG_NAME);
+  if (stale) await api('DELETE', `/diagrams/${stale.id}`);
+  const diag = await api('POST', '/diagrams', {
+    name: DIAG_NAME, type: 'app-diagram', modelId: id.uber, index: 0,
+  });
+  const diagramId = diag.diagram.id;
 
   // 4. Place objects on the diagram (content id == model object id)
   const placedKeys = OBJECTS.filter((o) => o.place !== false);
+  const pos = {};                       // key -> {x, y}
+  for (const o of placedKeys) pos[o.key] = { x: o.x, y: o.y };
+
   const objectsAdd = {};
   for (const o of placedKeys) {
     const oid = id[o.key];
@@ -184,17 +187,42 @@ async function main() {
     };
   }
 
-  // 5. Draw connections whose both endpoints are placed
+  // Anchor a connector side to an absolute point on the box edge.
+  const anchor = (p, side) => ({
+    'top-center':    { x: p.x + W / 2, y: p.y },
+    'bottom-center': { x: p.x + W / 2, y: p.y + H },
+    'left-middle':   { x: p.x,         y: p.y + H / 2 },
+    'right-middle':  { x: p.x + W,     y: p.y + H / 2 },
+  }[side]);
+
+  // Pick connector sides from the relative position of the two boxes.
+  const sides = (a, b) => {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      return dy >= 0
+        ? ['bottom-center', 'top-center']
+        : ['top-center', 'bottom-center'];
+    }
+    return dx >= 0
+      ? ['right-middle', 'left-middle']
+      : ['left-middle', 'right-middle'];
+  };
+
+  // 5. Draw connections whose both endpoints are placed, with real anchors.
   const placed = new Set(placedKeys.map((o) => o.key));
   const connectionsAdd = {};
   for (const [from, to] of CONNECTIONS) {
     if (!placed.has(from) || !placed.has(to)) continue;
     const cid = connId[`${from}->${to}`];
+    const [oSide, tSide] = sides(pos[from], pos[to]);
+    const oPt = anchor(pos[from], oSide);
+    const tPt = anchor(pos[to], tSide);
     connectionsAdd[cid] = {
       id: cid, modelId: cid,
       originId: id[from], targetId: id[to],
-      originConnector: 'bottom-center', targetConnector: 'top-center',
-      labelPosition: 0.5, lineShape: 'curved', points: [],
+      originConnector: oSide, targetConnector: tSide,
+      labelPosition: 0.5, lineShape: 'curved',
+      points: [oPt, tPt],
     };
   }
 
