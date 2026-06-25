@@ -137,12 +137,90 @@ architecture-beta
 
 ---
 
+## Style C — **Hand-drawn look** + ELK (the "mermaid.ai" aesthetic)
+
+The polished look you see on mermaid.ai comes largely from open-source config that GitHub *can* render: a `look`, a `theme`, and the ELK engine. This is Style A with `look: handDrawn` and a theme applied — the closest you get to the premium aesthetic while staying native and text-based.
+
+```mermaid
+---
+config:
+  look: handDrawn
+  layout: elk
+  theme: neutral
+---
+flowchart TB
+  Rider([Rider])
+  Driver([Driver])
+
+  subgraph clients[Client Apps]
+    RA[Rider App]
+    DA[Driver App]
+  end
+
+  subgraph edge[Edge]
+    GW[API Gateway]
+    WS[WebSocket Fleet]
+  end
+
+  subgraph core[Core Services]
+    RS[Ride Service]
+    MS[Matching Service]
+    LS[Location Service]
+    PS[Payment Service]
+  end
+
+  subgraph hot[Hot State and Messaging]
+    GEO[(Geo Index)]
+    PUB{{Pub/Sub}}
+    KAF[(Kafka)]
+  end
+
+  subgraph data[Durable Storage]
+    TDB[(Trip DB)]
+    PDB[(Payment DB)]
+    DWH[(Data Warehouse)]
+  end
+
+  MAPS[Maps / Routing API]
+  PSP[Payment Provider]
+
+  Rider --> RA
+  Driver --> DA
+  RA -->|REST| GW
+  DA -->|REST + pings| GW
+  RA <-->|live updates| WS
+  DA <-->|live updates| WS
+  GW --> RS
+  GW --> LS
+  RS -->|find driver| MS
+  MS -->|nearby query| GEO
+  LS -->|upsert LWW| GEO
+  RS -->|CAS status| GEO
+  RS -->|persist trip| TDB
+  RS -->|settle fare| PS
+  PS --> PDB
+  RS -->|status events| PUB
+  LS -->|live positions| PUB
+  PUB -->|fan-out| WS
+  LS -.->|sampled| KAF
+  RS -.->|trip events| KAF
+  KAF --> DWH
+  MS -.->|ETA| MAPS
+  PS -->|charge| PSP
+```
+
+> `look: handDrawn` needs Mermaid 11+. Swap `theme: neutral` for `default`, `dark`, `forest`, or `base` to taste. Remove the whole `config` block to fall back to plain rendering.
+
+---
+
 ## Quick comparison
 
-| | Style A — ELK flowchart | Style B — architecture-beta |
-|---|---|---|
-| Edge labels | ✅ Yes | ❌ No |
-| Icons | ❌ No | ✅ Yes |
-| Layout quality | Very good (ELK) | Good, icon-led |
-| Renderer requirement | Modern Mermaid | Mermaid 11.1+ |
-| Best for | Detailed, annotated views | Clean visual overview |
+| | Style A — ELK flowchart | Style B — architecture-beta | Style C — hand-drawn + ELK |
+|---|---|---|---|
+| Edge labels | ✅ Yes | ❌ No | ✅ Yes |
+| Icons | ❌ No | ✅ Yes | ❌ No |
+| Aesthetic | Clean, technical | Icon-led overview | Polished / sketch |
+| Renderer requirement | Modern Mermaid | Mermaid 11.1+ | Mermaid 11+ |
+| Native on GitHub | ✅ | ✅ | ✅ |
+
+**Key point:** all three are native and text-based. Anything beyond this (the exact mermaid.ai proprietary render) means exporting an SVG and committing it — same trade-off as IcePanel.
