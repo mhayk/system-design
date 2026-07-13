@@ -4,7 +4,9 @@ A design study of a **server-side API rate limiter**: a component that caps how 
 
 Based on **Chapter 4, "Design a Rate Limiter"** of *System Design Interview – An Insider's Guide* (Alex Xu), with a few clearly-marked additions of my own.
 
-> Status: 🚧 In progress
+> Status: ✅ Complete — [try the simulator live ↗](https://rate-limiter.mhayk.workers.dev/)
+>
+> Four questions I left open are parked at the end of [`notes.md`](./notes.md). They are curiosities beyond the chapter, not gaps in it.
 
 ---
 
