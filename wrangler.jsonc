@@ -1,0 +1,19 @@
+{
+  // Deploys the rate limiter's visual simulator as a static site on Cloudflare
+  // Workers.
+  //
+  // Note there is no "main" entry point. A Worker with an "assets" block and no
+  // script is an assets-only Worker: Cloudflare just serves the directory. That
+  // is the whole config — the simulator is a single self-contained HTML file
+  // with no build step, no dependencies, and no server side.
+  //
+  // This is why `wrangler deploy designs/.../visual` failed: `wrangler deploy`
+  // expects a Worker *script* as its argument, not a directory. The directory
+  // belongs here, in "assets.directory", and the deploy command is a bare
+  // `npx wrangler deploy`.
+  "name": "rate-limiter-scope",
+  "compatibility_date": "2026-07-13",
+  "assets": {
+    "directory": "./designs/02-rate-limiter/simulator/visual"
+  }
+}
