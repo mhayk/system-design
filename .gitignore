@@ -4,6 +4,9 @@
 !.env.example
 *.local
 
+# Reference books — copyrighted, and large. Keep them locally, not in git.
+books/
+
 # IcePanel / tooling
 node_modules/
 

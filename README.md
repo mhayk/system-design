@@ -20,6 +20,7 @@ The goal is simple: pick a real-world product, break down how it works, and rebu
 | # | System | Status | Notes |
 |---|--------|--------|-------|
 | 01 | [Uber](./designs/01-uber/) | 🚧 In progress | Ride-hailing: real-time matching, location tracking, pricing |
+| 02 | [Rate limiter](./designs/02-rate-limiter/) | 🚧 In progress | Throttling: five algorithms, Redis counters, the distributed race condition. Ships with a [runnable simulator](./designs/02-rate-limiter/simulator/). |
 
 > Status legend: 🚧 In progress · ✅ Complete · 🧊 Planned
 
@@ -29,14 +30,21 @@ The goal is simple: pick a real-world product, break down how it works, and rebu
 
 ```
 system-design/
-├── README.md                # You are here
-├── designs/                 # One folder per system design
-│   └── 01-uber/
-│       ├── README.md         # The design write-up
-│       ├── diagrams/         # Architecture & sequence diagrams
-│       └── notes.md          # Scratch notes, references, open questions
-└── resources/               # Shared notes, glossaries, reusable references
+├── README.md                 # You are here
+├── designs/                  # One folder per system design
+│   ├── 01-uber/
+│   │   ├── README.md          # The design write-up
+│   │   ├── diagrams/          # Architecture & sequence diagrams
+│   │   └── notes.md           # Scratch notes, references, open questions
+│   └── 02-rate-limiter/
+│       ├── README.md          # The design write-up
+│       ├── notes.md           # Active-recall deck for interview prep
+│       ├── diagrams/          # Architecture, algorithms, distributed concerns
+│       └── simulator/         # Runnable: the five algorithms, tests, CLI, visual
+└── resources/                # Shared notes, glossaries, reusable references
 ```
+
+Some designs ship with a **simulator** — a runnable implementation of the thing being designed. It is the most useful part: reading about an algorithm and *implementing* it are different activities, and the second one is where the misunderstandings surface. The rate limiter's simulator contradicted the book twice.
 
 ---
 
@@ -71,6 +79,7 @@ Each design follows a consistent structure so they are easy to compare and revis
   ```
 - **Language** — all write-ups are in British English.
 - **Format** — Markdown throughout, kept readable on GitHub.
+- **Simulators** — zero-dependency TypeScript, run directly by Node 22+ via native type stripping (`node --experimental-strip-types`). No `npm install`, no build step, no lock file. Tests use the built-in `node:test` runner and pin the implementation to the book's own worked examples, so a passing suite means the simulator still agrees with the source material.
 
 ---
 
@@ -79,11 +88,11 @@ Each design follows a consistent structure so they are easy to compare and revis
 A non-exhaustive list of systems I would like to design next:
 
 - [ ] Uber (in progress)
+- [x] Rate limiter (in progress)
 - [ ] URL shortener (TinyURL)
 - [ ] Chat application (WhatsApp / Messenger)
 - [ ] News feed (Twitter / Instagram)
 - [ ] Video streaming (YouTube / Netflix)
-- [ ] Rate limiter
 - [ ] Distributed cache
 - [ ] Notification service
 

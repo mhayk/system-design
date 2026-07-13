@@ -1,0 +1,14 @@
+{
+  "name": "rate-limiter-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Five rate limiting algorithms on a deterministic virtual clock. Chapter 4, System Design Interview.",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "sim": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/cli.ts",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test test/*.test.ts"
+  }
+}

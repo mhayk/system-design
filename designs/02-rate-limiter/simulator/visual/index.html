@@ -1,0 +1,1042 @@
+<title>Rate Limiter Scope — five algorithms, one traffic stream</title>
+
+<style>
+  :root {
+    /* Instrument cyan — the accent. Deliberately not green/red/amber, which are
+       spoken for: this page uses those three semantically and they must not be
+       confusable with "the brand colour". */
+    --accent: #2E9BB5;
+    --accent-soft: rgba(46, 155, 181, 0.14);
+
+    /* Semantic. Fixed across themes — a rejected request is red in both. */
+    --pass: #2F9E63;
+    --drop: #CE4257;
+    --warn: #C98A2E;
+    --token: #D99A3C;
+
+    /* Neutrals, biased slightly toward the accent's cyan rather than pure grey. */
+    --ground: #EEF3F4;
+    --panel: #FFFFFF;
+    --panel-2: #F6F9FA;
+    --line: #D2DFE2;
+    --line-soft: #E3ECEE;
+    --ink: #101E23;
+    --ink-2: #40565E;
+    --ink-3: #6C848D;
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    --radius: 3px;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #45B3CC;
+      --accent-soft: rgba(69, 179, 204, 0.16);
+      --pass: #3FBE7C;
+      --drop: #E8596F;
+      --warn: #E0A458;
+      --token: #E0A458;
+
+      --ground: #0D1418;
+      --panel: #131E23;
+      --panel-2: #17242A;
+      --line: #26383F;
+      --line-soft: #1D2C32;
+      --ink: #DEEAED;
+      --ink-2: #93A9B1;
+      --ink-3: #6B838C;
+      color-scheme: dark;
+    }
+  }
+
+  /* The viewer's explicit toggle must beat the OS preference in both directions. */
+  :root[data-theme="light"] {
+    --accent: #2E9BB5;
+    --accent-soft: rgba(46, 155, 181, 0.14);
+    --pass: #2F9E63;
+    --drop: #CE4257;
+    --warn: #C98A2E;
+    --token: #D99A3C;
+    --ground: #EEF3F4;
+    --panel: #FFFFFF;
+    --panel-2: #F6F9FA;
+    --line: #D2DFE2;
+    --line-soft: #E3ECEE;
+    --ink: #101E23;
+    --ink-2: #40565E;
+    --ink-3: #6C848D;
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    --accent: #45B3CC;
+    --accent-soft: rgba(69, 179, 204, 0.16);
+    --pass: #3FBE7C;
+    --drop: #E8596F;
+    --warn: #E0A458;
+    --token: #E0A458;
+    --ground: #0D1418;
+    --panel: #131E23;
+    --panel-2: #17242A;
+    --line: #26383F;
+    --line-soft: #1D2C32;
+    --ink: #DEEAED;
+    --ink-2: #93A9B1;
+    --ink-3: #6B838C;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    padding: clamp(1rem, 3vw, 2.5rem);
+    max-width: 1180px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------------------------------------------------------------- masthead */
+
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.75rem 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(1.05rem, 2.4vw, 1.4rem);
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h1 .mark { color: var(--accent); }
+
+  .standfirst {
+    color: var(--ink-2);
+    font-size: 0.9rem;
+    max-width: 58ch;
+    margin: 0;
+  }
+
+  /* ----------------------------------------------------------------- console */
+
+  .console {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .control {
+    background: var(--panel);
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .control > label,
+  .legend {
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .readout {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    margin: 0;
+  }
+
+  .segmented {
+    display: flex;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .segmented button {
+    flex: 1;
+    background: var(--panel-2);
+    color: var(--ink-2);
+    border: 0;
+    padding: 0.35rem 0.2rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 120ms, color 120ms;
+  }
+
+  .segmented button:hover { background: var(--accent-soft); color: var(--ink); }
+
+  .segmented button[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--panel);
+    font-weight: 600;
+  }
+
+  .buttons { display: flex; gap: 0.5rem; }
+
+  button.action {
+    flex: 1;
+    background: var(--panel-2);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 0.45rem 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms, transform 60ms;
+  }
+
+  button.action:hover { border-color: var(--accent); background: var(--accent-soft); }
+  button.action:active { transform: translateY(1px); }
+
+  button.action.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  button.action.primary:hover { filter: brightness(1.08); background: var(--accent); }
+
+  :is(button, input, select):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ------------------------------------------------------------------- lanes */
+
+  .scope {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel);
+    overflow: hidden;
+  }
+
+  .scope-head,
+  .lane {
+    display: grid;
+    grid-template-columns: 152px 74px 1fr 148px;
+    align-items: center;
+  }
+
+  .scope-head {
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--line);
+    padding: 0.5rem 0.9rem;
+    gap: 0.75rem;
+  }
+
+  .scope-head span {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .lane {
+    padding: 0.7rem 0.9rem;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .lane:last-child { border-bottom: 0; }
+
+  .lane-name {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .lane-params {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The internal-state gauge: tokens, queue depth, counter — whatever the
+     algorithm actually holds in memory. This is the thing the book draws. */
+  .gauge {
+    height: 30px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: var(--panel-2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gauge-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--token);
+    opacity: 0.55;
+    transition: width 90ms linear;
+  }
+
+  .gauge-text {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  canvas { display: block; width: 100%; height: 56px; }
+
+  .stats {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  .stats .pass { color: var(--pass); }
+  .stats .drop { color: var(--drop); }
+
+  .peak {
+    display: inline-block;
+    padding: 0 0.3rem;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+  .peak.over { background: var(--warn); color: #1a1206; }
+  .peak.ok { color: var(--ink-3); }
+
+  /* ------------------------------------------------------------------ footer */
+
+  .legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    align-items: center;
+    margin-top: 0.9rem;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: var(--ink-3);
+  }
+
+  .swatch {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 1px;
+    vertical-align: baseline;
+    margin-right: 0.3rem;
+  }
+
+  .notes {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .note h2 {
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.4rem;
+  }
+
+  .note p {
+    margin: 0 0 0.6rem;
+    font-size: 0.84rem;
+    color: var(--ink-2);
+    max-width: 62ch;
+  }
+
+  .note strong { color: var(--ink); font-weight: 600; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--accent-soft);
+    padding: 0.05em 0.3em;
+    border-radius: 2px;
+  }
+
+  @media (max-width: 720px) {
+    .scope-head { display: none; }
+    .lane {
+      grid-template-columns: 1fr 100px;
+      grid-template-areas: "name stats" "gauge gauge" "canvas canvas";
+      gap: 0.4rem 0.75rem;
+    }
+    .lane-name { grid-area: name; }
+    .lane-params { display: none; }
+    .gauge { grid-area: gauge; height: 22px; }
+    .lane canvas { grid-area: canvas; }
+    .stats { grid-area: stats; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gauge-fill { transition: none; }
+  }
+</style>
+
+<header class="masthead">
+  <h1><span class="mark">▚</span> Rate Limiter Scope</h1>
+  <p class="standfirst">
+    Five algorithms. One traffic stream. They agree completely until they don't —
+    so point a burst at them and watch where they come apart.
+  </p>
+</header>
+
+<section class="console" aria-label="Controls">
+  <div class="control">
+    <label for="limit">Limit <span class="readout" id="limitOut">20</span> req / min</label>
+    <input type="range" id="limit" min="5" max="60" step="5" value="20" />
+  </div>
+
+  <div class="control">
+    <label for="rate">Client rate <span class="readout" id="rateOut">16</span> req / min</label>
+    <input type="range" id="rate" min="0" max="60" step="2" value="16" />
+  </div>
+
+  <div class="control">
+    <span class="legend">Arrival pattern</span>
+    <div class="segmented" role="group" id="pattern">
+      <button data-pattern="steady" aria-pressed="true">Metronome</button>
+      <button data-pattern="poisson" aria-pressed="false">Poisson</button>
+    </div>
+  </div>
+
+  <div class="control">
+    <span class="legend">Provoke</span>
+    <div class="buttons">
+      <button class="action primary" id="burst">Fire burst</button>
+      <button class="action" id="edge">Boundary attack</button>
+    </div>
+  </div>
+
+  <div class="control">
+    <span class="legend">Transport</span>
+    <div class="buttons">
+      <button class="action" id="play">Pause</button>
+      <button class="action" id="reset">Reset</button>
+    </div>
+  </div>
+</section>
+
+<main class="scope">
+  <div class="scope-head" aria-hidden="true">
+    <span>Algorithm</span>
+    <span>State held</span>
+    <span>Last 90 seconds &mdash; dashed lines are window boundaries</span>
+    <span style="text-align:right">Admitted &middot; Peak</span>
+  </div>
+  <div id="lanes"></div>
+</main>
+
+<div class="legend-row">
+  <span><i class="swatch" style="background:var(--pass)"></i>admitted</span>
+  <span><i class="swatch" style="background:var(--drop)"></i>rejected (429)</span>
+  <span><i class="swatch" style="background:var(--token)"></i>state held in memory</span>
+  <span><i class="swatch" style="background:var(--warn)"></i>peak exceeded the limit</span>
+  <span id="clock" style="margin-left:auto; font-variant-numeric: tabular-nums;"></span>
+</div>
+
+<section class="notes">
+  <div class="note">
+    <h2>Peak is the honest number</h2>
+    <p>
+      <strong>Peak</strong> is the most requests a limiter actually delivered in
+      <em>any</em> rolling minute &mdash; not just the clock-aligned ones it happens to
+      be counting. A correct limiter's peak never exceeds its limit.
+    </p>
+    <p>
+      Hit <strong>Boundary attack</strong>: a full quota just before a window edge and
+      another just after. Both minutes are individually legal, so the
+      <strong>fixed window</strong> waves all of it through &mdash; and the rolling minute
+      straddling the boundary sees <strong>twice the limit</strong>. Its counter never
+      notices.
+    </p>
+  </div>
+
+  <div class="note">
+    <h2>Two things that look like bugs</h2>
+    <p>
+      The <strong>leaking bucket</strong> is scored on when requests <em>leave</em> its
+      queue, not when they arrive &mdash; it defers work instead of refusing it, so what
+      the server downstream sees is the drip, not the burst. Its cost is latency, and
+      it is charged to the requests it accepts.
+    </p>
+    <p>
+      The <strong>token bucket</strong>'s peak legitimately runs over the limit. A bucket
+      sized to the limit starts <em>full</em>, so it can spend its whole capacity plus
+      whatever refills meanwhile. That is the burst allowance you asked for when you
+      chose it.
+    </p>
+  </div>
+
+  <div class="note">
+    <h2>Try this</h2>
+    <p>
+      Set the client rate <em>below</em> the limit and switch from
+      <strong>Metronome</strong> to <strong>Poisson</strong>. Same average rate &mdash;
+      but real arrivals clump, and the clumps breach a limit the average never
+      approaches. Rejections appear from nothing.
+    </p>
+    <p>
+      That is why a customer can be genuinely under quota and genuinely getting
+      <code>429</code>s, and not be lying about either.
+    </p>
+  </div>
+</section>
+
+<script>
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // The five algorithms. Ports of designs/02-rate-limiter/simulator/src/, kept
+  // deliberately close to those files so the two can be read side by side.
+  // Everything runs on a virtual clock: `t` is a number of milliseconds.
+  // ---------------------------------------------------------------------------
+
+  class TokenBucket {
+    constructor(limit, windowMs) {
+      this.label = 'Token bucket';
+      this.capacity = limit;
+      this.refillPerMs = limit / windowMs;
+      this.tokens = limit;
+      this.last = 0;
+      this.gaugeLabel = 'tokens';
+      this.gaugeMax = limit;
+    }
+    allow(t) {
+      this.tokens = Math.min(this.capacity, this.tokens + (t - this.last) * this.refillPerMs);
+      this.last = t;
+      const ok = this.tokens >= 1 - 1e-9;
+      if (ok) this.tokens -= 1;
+      return { allowed: ok };
+    }
+    // The bucket keeps filling while nothing arrives, so the gauge must accrue
+    // on every frame — not only when a request happens to show up.
+    tick(t) {
+      this.tokens = Math.min(this.capacity, this.tokens + (t - this.last) * this.refillPerMs);
+      this.last = t;
+    }
+    get gauge() { return Math.max(0, this.tokens); }
+    get params() { return `cap ${this.capacity}`; }
+  }
+
+  class LeakingBucket {
+    constructor(limit, windowMs) {
+      this.label = 'Leaking bucket';
+      this.capacity = limit;
+      this.intervalMs = windowMs / limit;
+      this.queue = [];              // departure times, FIFO
+      this.lastDeparture = -Infinity;
+      this.gaugeLabel = 'queued';
+      this.gaugeMax = limit;
+    }
+    leak(t) {
+      while (this.queue.length && this.queue[0] < t) this.lastDeparture = this.queue.shift();
+    }
+    allow(t) {
+      this.leak(t);
+      if (this.queue.length >= this.capacity) return { allowed: false };
+      const prev = this.queue.length ? this.queue[this.queue.length - 1] : this.lastDeparture;
+      const departsAt = Math.max(t, prev + this.intervalMs);
+      this.queue.push(departsAt);
+      // Scored on departure: this is the one algorithm that defers rather than
+      // refuses, and judging it on arrivals would misrepresent what downstream saw.
+      return { allowed: true, departsAt, queueDelayMs: departsAt - t };
+    }
+    tick(t) { this.leak(t); }
+    get gauge() { return this.queue.length; }
+    get params() { return `queue ${this.capacity}`; }
+  }
+
+  class FixedWindow {
+    constructor(limit, windowMs) {
+      this.label = 'Fixed window';
+      this.limit = limit;
+      this.windowMs = windowMs;
+      this.windowStart = -1;
+      this.count = 0;
+      this.gaugeLabel = 'count';
+      this.gaugeMax = limit;
+    }
+    allow(t) {
+      // Aligned to the clock, not to first use. That alignment is the whole flaw.
+      const ws = Math.floor(t / this.windowMs) * this.windowMs;
+      if (ws !== this.windowStart) { this.windowStart = ws; this.count = 0; }
+      const ok = this.count < this.limit;
+      if (ok) this.count += 1;
+      return { allowed: ok };
+    }
+    tick(t) {
+      const ws = Math.floor(t / this.windowMs) * this.windowMs;
+      if (ws !== this.windowStart) { this.windowStart = ws; this.count = 0; }
+    }
+    get gauge() { return this.count; }
+    get params() { return `limit ${this.limit}`; }
+  }
+
+  class SlidingWindowLog {
+    constructor(limit, windowMs) {
+      this.label = 'Sliding window log';
+      this.limit = limit;
+      this.windowMs = windowMs;
+      this.log = [];
+      this.gaugeLabel = 'stamps';
+      this.gaugeMax = limit;
+    }
+    evict(t) {
+      const cutoff = t - this.windowMs;
+      // Half-open (t-w, t]: a request exactly w old has aged out. Close the window
+      // at both ends and a client sending exactly at its limit is refused forever.
+      while (this.log.length && this.log[0] <= cutoff) this.log.shift();
+    }
+    allow(t) {
+      this.evict(t);
+      this.log.push(t);   // the rejected request's timestamp is stored too — the memory con
+      return { allowed: this.log.length <= this.limit };
+    }
+    tick(t) { this.evict(t); }
+    get gauge() { return this.log.length; }
+    get params() { return `limit ${this.limit}`; }
+  }
+
+  class SlidingWindowCounter {
+    constructor(limit, windowMs) {
+      this.label = 'Sliding window counter';
+      this.limit = limit;
+      this.windowMs = windowMs;
+      this.windowStart = -1;
+      this.count = 0;
+      this.previous = 0;
+      this.rolling = 0;
+      this.gaugeLabel = 'rolling';
+      this.gaugeMax = limit;
+    }
+    roll(t) {
+      const ws = Math.floor(t / this.windowMs) * this.windowMs;
+      if (ws !== this.windowStart) {
+        this.previous = ws === this.windowStart + this.windowMs ? this.count : 0;
+        this.windowStart = ws;
+        this.count = 0;
+      }
+    }
+    estimate(t) {
+      const overlap = 1 - (t - this.windowStart) / this.windowMs;
+      return this.count + this.previous * overlap;
+    }
+    allow(t) {
+      this.roll(t);
+      this.rolling = Math.floor(this.estimate(t));
+      const ok = this.rolling < this.limit;
+      if (ok) this.count += 1;
+      return { allowed: ok };
+    }
+    tick(t) { this.roll(t); this.rolling = Math.floor(this.estimate(t)); }
+    get gauge() { return this.rolling; }
+    get params() { return `limit ${this.limit}`; }
+  }
+
+  const ALGORITHMS = [
+    TokenBucket, LeakingBucket, FixedWindow, SlidingWindowLog, SlidingWindowCounter,
+  ];
+
+  // ---------------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------------
+
+  const WINDOW_MS = 60_000;   // the rate limit window
+  const VIEW_MS = 90_000;     // how much history the scope shows
+  const SPEED = 6;            // virtual ms per real ms — 6x, so a minute takes 10s
+
+  const state = {
+    limit: 20,
+    ratePerMin: 16,
+    pattern: 'steady',
+    running: true,
+    vt: 0,              // virtual time, ms
+    nextArrival: 0,
+    pending: [],        // manually injected arrival times
+    lanes: [],
+  };
+
+  // Seeded PRNG so a reload does not silently change the traffic underneath you.
+  let seed = 0x9e3779b9;
+  function random() {
+    seed = (seed + 0x6d2b79f5) >>> 0;
+    let x = seed;
+    x = Math.imul(x ^ (x >>> 15), x | 1);
+    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  }
+
+  function buildLanes() {
+    const host = document.getElementById('lanes');
+    host.textContent = '';
+    state.lanes = ALGORITHMS.map((Algo) => {
+      const limiter = new Algo(state.limit, WINDOW_MS);
+
+      const row = document.createElement('div');
+      row.className = 'lane';
+      row.innerHTML = `
+        <div>
+          <div class="lane-name">${limiter.label}</div>
+          <div class="lane-params">${limiter.params}</div>
+        </div>
+        <div class="gauge">
+          <div class="gauge-fill"></div>
+          <div class="gauge-text"></div>
+        </div>
+        <canvas></canvas>
+        <div class="stats"></div>`;
+      host.appendChild(row);
+
+      return {
+        limiter,
+        events: [],          // { t, allowed, departsAt }
+        allowed: 0,
+        rejected: 0,
+        canvas: row.querySelector('canvas'),
+        fill: row.querySelector('.gauge-fill'),
+        gaugeText: row.querySelector('.gauge-text'),
+        stats: row.querySelector('.stats'),
+      };
+    });
+    sizeCanvases();
+  }
+
+  function sizeCanvases() {
+    const dpr = window.devicePixelRatio || 1;
+    for (const lane of state.lanes) {
+      const rect = lane.canvas.getBoundingClientRect();
+      lane.canvas.width = Math.max(1, Math.round(rect.width * dpr));
+      lane.canvas.height = Math.max(1, Math.round(rect.height * dpr));
+      lane.ctx = lane.canvas.getContext('2d');
+      lane.ctx.scale(dpr, dpr);
+      lane.w = rect.width;
+      lane.h = rect.height;
+    }
+  }
+
+  function reset() {
+    state.vt = 0;
+    state.nextArrival = 0;
+    state.pending = [];
+    seed = 0x9e3779b9;
+    buildLanes();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Traffic
+  // ---------------------------------------------------------------------------
+
+  function gapMs() {
+    const perMs = state.ratePerMin / WINDOW_MS;
+    if (perMs <= 0) return Infinity;
+    // Poisson: exponentially distributed inter-arrival times. Same mean as the
+    // metronome — but clumpy, which is the entire point of the comparison.
+    return state.pattern === 'poisson'
+      ? -Math.log(1 - random()) / perMs
+      : 1 / perMs;
+  }
+
+  /** Every arrival time falling inside [from, to). */
+  function arrivalsBetween(from, to) {
+    const out = [];
+
+    while (state.pending.length && state.pending[0] < to) out.push(state.pending.shift());
+
+    if (state.ratePerMin > 0) {
+      if (state.nextArrival < from) state.nextArrival = from;
+      while (state.nextArrival < to) {
+        out.push(state.nextArrival);
+        state.nextArrival += gapMs();
+      }
+    }
+
+    return out.sort((a, b) => a - b);
+  }
+
+  function fireBurst() {
+    // A full quota, arriving effectively at once.
+    const n = state.limit;
+    for (let i = 0; i < n; i++) state.pending.push(state.vt + 20 + i * 12);
+    state.pending.sort((a, b) => a - b);
+  }
+
+  function boundaryAttack() {
+    // A full quota immediately before the next window boundary, and another
+    // immediately after it. Both windows are individually legal.
+    let boundary = (Math.floor(state.vt / WINDOW_MS) + 1) * WINDOW_MS;
+
+    // Every limiter assumes arrivals are handed to it in non-decreasing time
+    // order. If we are already inside the run-up to the next boundary, scheduling
+    // there would inject arrivals into the past — so skip to the boundary after.
+    while (boundary - 3_000 <= state.vt + 500) boundary += WINDOW_MS;
+
+    for (let i = 0; i < state.limit; i++) {
+      state.pending.push(boundary - 3_000 + i * 60);
+      state.pending.push(boundary + 200 + i * 60);
+    }
+    state.pending.sort((a, b) => a - b);
+    state.running = true;
+    document.getElementById('play').textContent = 'Pause';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Metrics
+  // ---------------------------------------------------------------------------
+
+  /** Most requests delivered downstream in any rolling window. Two pointers. */
+  function peakInRollingWindow(times) {
+    let left = 0, peak = 0;
+    for (let right = 0; right < times.length; right++) {
+      while (times[right] - times[left] >= WINDOW_MS) left++;
+      peak = Math.max(peak, right - left + 1);
+    }
+    return peak;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Drawing
+  // ---------------------------------------------------------------------------
+
+  // Canvas cannot read CSS custom properties, so the palette has to be resolved
+  // in JS. Cache it: this is read on every stroke of every lane on every frame,
+  // and getComputedStyle is a layout-flushing call.
+  let palette = {};
+  function readPalette() {
+    const s = getComputedStyle(document.documentElement);
+    const get = (n) => s.getPropertyValue(n).trim();
+    palette = {
+      line: get('--line'),
+      ink3: get('--ink-3'),
+      pass: get('--pass'),
+      drop: get('--drop'),
+      accent: get('--accent'),
+    };
+  }
+  readPalette();
+
+  // Re-resolve when the theme changes underneath us — either the OS preference
+  // or the viewer's own toggle, which stamps data-theme on the root element.
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readPalette);
+  new MutationObserver(readPalette).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  });
+
+  function draw(lane) {
+    const { ctx, w, h } = lane;
+    const from = state.vt - VIEW_MS;
+    const x = (t) => ((t - from) / VIEW_MS) * w;
+    const mid = h / 2;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Baseline.
+    ctx.strokeStyle = palette.line;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, mid + 0.5);
+    ctx.lineTo(w, mid + 0.5);
+    ctx.stroke();
+
+    // Window boundaries. These are the thing to watch: the fixed window resets
+    // its counter on exactly these lines, and that is what the boundary attack
+    // exploits.
+    ctx.strokeStyle = palette.ink3;
+    ctx.globalAlpha = 0.4;
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    const first = Math.ceil(from / WINDOW_MS) * WINDOW_MS;
+    for (let b = first; b <= state.vt; b += WINDOW_MS) {
+      const bx = Math.round(x(b)) + 0.5;
+      ctx.moveTo(bx, 0);
+      ctx.lineTo(bx, h);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+
+    // Requests: admitted tick up, rejected tick down.
+    const pass = palette.pass;
+    const drop = palette.drop;
+    ctx.lineWidth = 2;
+
+    for (const e of lane.events) {
+      if (e.t < from) continue;
+      const ex = x(e.t);
+      ctx.strokeStyle = e.allowed ? pass : drop;
+      ctx.globalAlpha = e.allowed ? 0.9 : 0.75;
+      ctx.beginPath();
+      ctx.moveTo(ex, mid);
+      ctx.lineTo(ex, e.allowed ? mid - (h / 2 - 3) : mid + (h / 2 - 3));
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // The "now" edge.
+    ctx.strokeStyle = palette.accent;
+    ctx.beginPath();
+    ctx.moveTo(w - 0.5, 0);
+    ctx.lineTo(w - 0.5, h);
+    ctx.stroke();
+  }
+
+  function paint(lane) {
+    const limiter = lane.limiter;
+    const level = limiter.gauge;
+    const pct = Math.min(100, (level / limiter.gaugeMax) * 100);
+
+    lane.fill.style.width = pct + '%';
+    lane.gaugeText.textContent = `${Math.floor(level)}/${limiter.gaugeMax}`;
+
+    const visible = lane.events.filter((e) => e.t >= state.vt - VIEW_MS);
+    const delivered = visible
+      .filter((e) => e.allowed)
+      .map((e) => e.departsAt ?? e.t)
+      .sort((a, b) => a - b);
+    const peak = peakInRollingWindow(delivered);
+    const over = peak > state.limit;
+
+    const total = lane.allowed + lane.rejected;
+    const pctPass = total ? Math.round((lane.allowed / total) * 100) : 0;
+
+    lane.stats.innerHTML =
+      `<span class="pass">${lane.allowed}</span> / <span class="drop">${lane.rejected}</span> &nbsp;${pctPass}%<br>` +
+      `<span class="peak ${over ? 'over' : 'ok'}">peak ${peak}</span>`;
+
+    draw(lane);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Loop
+  // ---------------------------------------------------------------------------
+
+  let lastFrame = null;
+
+  function frame(now) {
+    if (lastFrame === null) lastFrame = now;
+    const elapsed = Math.min(100, now - lastFrame);   // clamp: tab-switch shouldn't fast-forward
+    lastFrame = now;
+
+    if (state.running) {
+      const from = state.vt;
+      const to = from + elapsed * SPEED;
+
+      for (const t of arrivalsBetween(from, to)) {
+        for (const lane of state.lanes) {
+          const d = lane.limiter.allow(t);
+          lane.events.push({ t, allowed: d.allowed, departsAt: d.departsAt });
+          if (d.allowed) lane.allowed++; else lane.rejected++;
+        }
+      }
+
+      state.vt = to;
+
+      // Let the limiters accrue/drain even when nothing arrived, so the gauges
+      // move continuously rather than only on request.
+      for (const lane of state.lanes) {
+        lane.limiter.tick(state.vt);
+        // Drop history that has scrolled off the scope.
+        if (lane.events.length > 4000) {
+          lane.events = lane.events.filter((e) => e.t >= state.vt - VIEW_MS);
+        }
+      }
+    }
+
+    for (const lane of state.lanes) paint(lane);
+
+    const s = Math.floor(state.vt / 1000);
+    document.getElementById('clock').textContent =
+      `t + ${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+    requestAnimationFrame(frame);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Wiring
+  // ---------------------------------------------------------------------------
+
+  const limitEl = document.getElementById('limit');
+  const rateEl = document.getElementById('rate');
+
+  limitEl.addEventListener('input', () => {
+    state.limit = Number(limitEl.value);
+    document.getElementById('limitOut').textContent = state.limit;
+    buildLanes();   // the limit is baked into every limiter, so rebuild them
+  });
+
+  rateEl.addEventListener('input', () => {
+    state.ratePerMin = Number(rateEl.value);
+    document.getElementById('rateOut').textContent = state.ratePerMin;
+    state.nextArrival = state.vt;
+  });
+
+  document.getElementById('pattern').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    state.pattern = btn.dataset.pattern;
+    for (const b of e.currentTarget.querySelectorAll('button')) {
+      b.setAttribute('aria-pressed', String(b === btn));
+    }
+    state.nextArrival = state.vt;
+  });
+
+  document.getElementById('burst').addEventListener('click', fireBurst);
+  document.getElementById('edge').addEventListener('click', boundaryAttack);
+  document.getElementById('reset').addEventListener('click', reset);
+
+  document.getElementById('play').addEventListener('click', (e) => {
+    state.running = !state.running;
+    e.currentTarget.textContent = state.running ? 'Pause' : 'Play';
+  });
+
+  window.addEventListener('resize', sizeCanvases);
+
+  buildLanes();
+  requestAnimationFrame(frame);
+</script>
