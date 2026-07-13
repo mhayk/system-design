@@ -11,7 +11,12 @@
   // expects a Worker *script* as its argument, not a directory. The directory
   // belongs here, in "assets.directory", and the deploy command is a bare
   // `npx wrangler deploy`.
-  "name": "rate-limiter-scope",
+  //
+  // "name" must match the Workers project this deploys to
+  // (rate-limiter.mhayk.workers.dev). If it drifts, a `wrangler deploy` run from
+  // a laptop would quietly create a *second*, separate Worker under the config's
+  // name instead of updating the live one.
+  "name": "rate-limiter",
   "compatibility_date": "2026-07-13",
   "assets": {
     "directory": "./designs/02-rate-limiter/simulator/visual"

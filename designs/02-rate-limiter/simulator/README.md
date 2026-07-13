@@ -4,6 +4,8 @@ Five rate limiting algorithms, running on a **deterministic virtual clock**, fed
 
 Reading Chapter 4 makes all five algorithms sound reasonable. They only stop sounding reasonable when you point a burst at them.
 
+**🚦 [rate-limiter.mhayk.workers.dev](https://rate-limiter.mhayk.workers.dev/)** — the visual version, no setup at all. Or in the terminal:
+
 ```bash
 npm run sim -- --scenario=fixed-window-edge-burst
 ```
@@ -108,9 +110,12 @@ simulator/
 │   ├── distributed.ts    # The race condition, as a deterministic interleaving
 │   ├── render.ts         # ASCII timelines
 │   └── cli.ts
-├── test/                 # 28 tests pinning the algorithms to the book's figures
-└── redis/                # Production Lua scripts (reference — not run by the sim)
+├── test/                 # 29 tests pinning the algorithms to the book's figures
+├── redis/                # Production Lua scripts (reference — not run by the sim)
+└── visual/               # The live version — one self-contained HTML file
 ```
+
+`visual/index.html` is a port of `src/algorithms/` to plain JS, kept deliberately close to those files so the two can be read side by side. It is deployed to [rate-limiter.mhayk.workers.dev](https://rate-limiter.mhayk.workers.dev/) on every push to `main` — see [`wrangler.jsonc`](../../../wrangler.jsonc) at the repo root. No build step: Cloudflare just serves the directory.
 
 The five algorithm files are deliberately small and heavily commented. Read them in this order:
 

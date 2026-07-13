@@ -20,7 +20,7 @@ The goal is simple: pick a real-world product, break down how it works, and rebu
 | # | System | Status | Notes |
 |---|--------|--------|-------|
 | 01 | [Uber](./designs/01-uber/) | 🚧 In progress | Ride-hailing: real-time matching, location tracking, pricing |
-| 02 | [Rate limiter](./designs/02-rate-limiter/) | 🚧 In progress | Throttling: five algorithms, Redis counters, the distributed race condition. Ships with a [runnable simulator](./designs/02-rate-limiter/simulator/). |
+| 02 | [Rate limiter](./designs/02-rate-limiter/) | 🚧 In progress | Throttling: five algorithms, Redis counters, the distributed race condition. Ships with a [runnable simulator](./designs/02-rate-limiter/simulator/) — **[try it live ↗](https://rate-limiter.mhayk.workers.dev/)** |
 
 > Status legend: 🚧 In progress · ✅ Complete · 🧊 Planned
 
@@ -45,6 +45,10 @@ system-design/
 ```
 
 Some designs ship with a **simulator** — a runnable implementation of the thing being designed. It is the most useful part: reading about an algorithm and *implementing* it are different activities, and the second one is where the misunderstandings surface. The rate limiter's simulator contradicted the book twice.
+
+Where a simulator has a visual version, it is deployed on Cloudflare Workers (see [`wrangler.jsonc`](./wrangler.jsonc)) and linked from the table above:
+
+- 🚦 **[Rate Limiter Scope](https://rate-limiter.mhayk.workers.dev/)** — all five algorithms processing the same live traffic stream. Hit *Boundary attack* and watch the fixed window let through twice its limit.
 
 ---
 

@@ -299,6 +299,8 @@ This is the heart of the chapter. Each has distinct pros and cons; understanding
 > ```
 >
 > See [`./simulator/README.md`](./simulator/README.md) for the full scenario list.
+>
+> 🚦 **Or just open [rate-limiter.mhayk.workers.dev](https://rate-limiter.mhayk.workers.dev/)** — the visual version, with all five algorithms running against one live traffic stream. Hit *Boundary attack* to watch the fixed window let through twice its limit in real time.
 
 ---
 
