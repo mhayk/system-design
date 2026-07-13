@@ -1,6 +1,19 @@
-<title>Rate Limiter Scope — five algorithms, one traffic stream</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rate Limiter Scope — five algorithms, one traffic stream</title>
+  <meta name="description" content="The five rate limiting algorithms from System Design Interview, Chapter 4, processing the same live traffic stream. Fire a burst and watch where they come apart." />
+  <meta name="author" content="Mhayk Whandson" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🚦</text></svg>" />
 
 <style>
+  /* Minimal reset. Worth stating explicitly: this file is served as a plain
+     static document, so nothing else is going to normalise it for us. */
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+
   :root {
     /* Instrument cyan — the accent. Deliberately not green/red/amber, which are
        spoken for: this page uses those three semantically and they must not be
@@ -120,8 +133,6 @@
     text-wrap: balance;
     margin: 0;
   }
-
-  h1 .mark { color: var(--accent); }
 
   .standfirst {
     color: var(--ink-2);
@@ -399,6 +410,34 @@
     border-radius: 2px;
   }
 
+  /* ---------------------------------------------------------------- colophon */
+
+  .colophon {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+  }
+
+  .colophon p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--ink-3);
+    max-width: 46ch;
+  }
+
+  .colophon strong { color: var(--ink-2); font-weight: 600; }
+
+  .colophon a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .colophon a:hover { border-bottom-color: var(--accent); }
+
   @media (max-width: 720px) {
     .scope-head { display: none; }
     .lane {
@@ -418,8 +457,11 @@
   }
 </style>
 
+</head>
+<body>
+
 <header class="masthead">
-  <h1><span class="mark">▚</span> Rate Limiter Scope</h1>
+  <h1>Rate Limiter Scope</h1>
   <p class="standfirst">
     Five algorithms. One traffic stream. They agree completely until they don't —
     so point a burst at them and watch where they come apart.
@@ -527,6 +569,18 @@
     </p>
   </div>
 </section>
+
+<footer class="colophon">
+  <p>
+    Built by <strong>Mhayk Whandson</strong> while working through
+    <em>System Design Interview &mdash; An Insider's Guide</em>, Chapter 4.
+  </p>
+  <p>
+    The algorithms here are a port of the terminal simulator, which pins each one
+    to the book's own worked figures with a test suite.
+    <a href="https://github.com/mhayk/system-design/tree/main/designs/02-rate-limiter">Source and write-up on GitHub &nearr;</a>
+  </p>
+</footer>
 
 <script>
   'use strict';
@@ -1040,3 +1094,6 @@
   buildLanes();
   requestAnimationFrame(frame);
 </script>
+
+</body>
+</html>
