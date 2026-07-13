@@ -115,7 +115,9 @@ simulator/
 └── visual/               # The live version — one self-contained HTML file
 ```
 
-`visual/index.html` is a port of `src/algorithms/` to plain JS, kept deliberately close to those files so the two can be read side by side. It is deployed to [rate-limiter.mhayk.workers.dev](https://rate-limiter.mhayk.workers.dev/) on every push to `main` — see [`wrangler.jsonc`](../../../wrangler.jsonc) at the repo root. No build step: Cloudflare just serves the directory.
+`visual/index.html` is a port of `src/algorithms/` to plain JS, kept deliberately close to those files so the two can be read side by side. It is a complete, standalone HTML document — doctype, `<meta charset>` and all — because Cloudflare serves the raw file and nothing else is going to normalise it.
+
+It is deployed to [rate-limiter.mhayk.workers.dev](https://rate-limiter.mhayk.workers.dev/) from [`wrangler.jsonc`](../../../wrangler.jsonc) at the repo root. No build step: Cloudflare just serves the directory. Deploys are **triggered manually** from the Cloudflare dashboard — pushing to `main` does not publish on its own.
 
 The five algorithm files are deliberately small and heavily commented. Read them in this order:
 

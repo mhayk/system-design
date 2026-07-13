@@ -10,7 +10,7 @@
   // This is why `wrangler deploy designs/.../visual` failed: `wrangler deploy`
   // expects a Worker *script* as its argument, not a directory. The directory
   // belongs here, in "assets.directory", and the deploy command is a bare
-  // `npx wrangler deploy`.
+  // `npx wrangler deploy` — with no path argument at all.
   //
   // "name" must match the Workers project this deploys to
   // (rate-limiter.mhayk.workers.dev). If it drifts, a `wrangler deploy` run from
