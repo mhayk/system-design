@@ -1,0 +1,27 @@
+{
+  // Deploys the estimation tools (calculator + wall poster) as one static site
+  // on Cloudflare Workers, served from a hub landing page:
+  //
+  //   estimation.mhayk.workers.dev/            -> index.html   (the hub)
+  //   estimation.mhayk.workers.dev/estimator/  -> estimator/index.html
+  //   estimation.mhayk.workers.dev/poster/     -> poster/index.html
+  //
+  // An assets-only Worker — no "main" script, so Cloudflare simply serves the
+  // directory. Same shape as the rate limiter's config; the only differences
+  // are the name and the directory.
+  //
+  // IMPORTANT: this file is deliberately NOT named `wrangler.jsonc`. A bare
+  // `npx wrangler deploy` auto-loads only `wrangler.jsonc` (the rate limiter's
+  // config), so the rate-limiter build is untouched. To deploy THIS one, the
+  // command must point at this file explicitly:
+  //
+  //   npx wrangler deploy --config wrangler.estimation.jsonc
+  //
+  // "name" drives the *.workers.dev subdomain, so name the Cloudflare project
+  // "estimation" too, or the URL and the config will disagree.
+  "name": "estimation",
+  "compatibility_date": "2026-07-21",
+  "assets": {
+    "directory": "./resources/estimation"
+  }
+}
