@@ -26,6 +26,16 @@ The goal is simple: pick a real-world product, break down how it works, and rebu
 
 ---
 
+## 🧰 Resources
+
+Cross-cutting references that serve every design, not just one:
+
+| Resource | What it is |
+|----------|------------|
+| [📐 Estimation](./resources/estimation/) | Back-of-the-envelope sizing — QPS, storage, bandwidth, latency, availability. A [reference](./resources/estimation/README.md), a [recall deck](./resources/estimation/cheat-sheet.md), an [interactive calculator](./resources/estimation/estimator/) and a [printable wall poster](./resources/estimation/poster/). |
+
+---
+
 ## 🗂️ Repository Structure
 
 ```
@@ -41,7 +51,8 @@ system-design/
 │       ├── notes.md           # Active-recall deck for interview prep
 │       ├── diagrams/          # Architecture, algorithms, distributed concerns
 │       └── simulator/         # Runnable: the five algorithms, tests, CLI, visual
-└── resources/                # Shared notes, glossaries, reusable references
+└── resources/                # Shared, cross-cutting references
+    └── estimation/            # Back-of-the-envelope: reference, deck, poster, calculator
 ```
 
 Some designs ship with a **simulator** — a runnable implementation of the thing being designed. It is the most useful part: reading about an algorithm and *implementing* it are different activities, and the second one is where the misunderstandings surface. The rate limiter's simulator contradicted the book twice.

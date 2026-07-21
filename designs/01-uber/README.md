@@ -44,6 +44,8 @@ The key tension: **location updates are write-heavy and tolerant of staleness**,
 
 ## 4. Scale Estimation
 
+> 📐 The reusable method behind these numbers — QPS, storage, bandwidth, the latency and availability tables — lives in [resources/estimation](../../resources/estimation/), with an [interactive calculator](../../resources/estimation/estimator/).
+
 Rough back-of-the-envelope figures to size the system:
 
 - **Active drivers:** ~1M concurrent during peak.

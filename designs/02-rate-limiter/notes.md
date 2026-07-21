@@ -408,6 +408,7 @@ Questions 4 and 6 are the load-bearing ones: 4 gives you the race condition + sy
 - The interviewer only says *"a large number of requests"* — so **derive** an envelope out loud and label it as an assumption. (Mine, in `README.md` §4: 100k req/s peak ⇒ ~100k Redis ops/s ⇒ shard Redis by key; counters ~1 GB for 1M active clients × 5 rules; latency budget **< 1–2 ms p99**, which forces **one atomic round-trip**, not read-then-write.)
 - Make the point that the limiter's cost scales with **request volume**, not user count — the opposite of most services. That's exactly why the sliding window **log** is dangerous and the **counter** variants aren't.
 - Then reach for: **shard Redis by key**, **edge deployment**, **eventual consistency** across regions, and — if pressed harder — a **local in-process pre-filter** in front of the centralised counter to absorb hot keys.
+- Rusty on the arithmetic? The [estimation recall deck](../../resources/estimation/cheat-sheet.md) drills QPS, storage and the availability nines.
 
 ### Time-boxing a 45-minute answer
 
