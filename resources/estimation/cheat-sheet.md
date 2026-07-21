@@ -4,7 +4,7 @@ Active-recall notes for back-of-the-envelope estimation (*System Design Intervie
 
 Answers are hidden behind `<details>` blocks. **Say your answer out loud first, then expand.**
 
-Full reference: [`README.md`](./README.md) · Practise: [interactive calculator](./estimator/) · Pin it up: [wall poster](./poster/)
+Full reference: [`README.md`](./README.md) · Practise: [interactive calculator ↗](https://estimation.mhayk.workers.dev/estimator/) · Pin it up: [wall poster ↗](https://estimation.mhayk.workers.dev/poster/)
 
 ---
 
@@ -181,4 +181,4 @@ The cheapest revision, in order:
 2. **The 60-second method** — say it out loud without looking.
 3. **The Twitter example** — derive 3,500 QPS and 55 PB from the five assumptions, on paper.
 4. **The traps** — read the left column, correct it yourself, check against the right.
-5. **[The calculator](./estimator/)** — invent an app, guess its envelope, then check your mental arithmetic against the tool.
+5. **[The calculator ↗](https://estimation.mhayk.workers.dev/estimator/)** — invent an app, guess its envelope, then check your mental arithmetic against the tool.

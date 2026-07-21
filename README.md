@@ -32,7 +32,7 @@ Cross-cutting references that serve every design, not just one:
 
 | Resource | What it is |
 |----------|------------|
-| [📐 Estimation](./resources/estimation/) | Back-of-the-envelope sizing — QPS, storage, bandwidth, latency, availability. A [reference](./resources/estimation/README.md), a [recall deck](./resources/estimation/cheat-sheet.md), an [interactive calculator](./resources/estimation/estimator/) and a [printable wall poster](./resources/estimation/poster/). |
+| [📐 Estimation](./resources/estimation/) | Back-of-the-envelope sizing — QPS, storage, bandwidth, latency, availability. A [reference](./resources/estimation/README.md), a [recall deck](./resources/estimation/cheat-sheet.md), and two live tools: an [interactive calculator ↗](https://estimation.mhayk.workers.dev/estimator/) and a [printable wall poster ↗](https://estimation.mhayk.workers.dev/poster/). |
 
 ---
 

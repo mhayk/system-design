@@ -73,7 +73,7 @@ The central tension: **accuracy vs memory vs latency**. Every algorithm in §8.2
 
 > ⚠️ **My own reasoning — the book does not give back-of-the-envelope numbers for this chapter.** The interviewer only says "the system must be able to handle a large number of requests". I derive a plausible envelope so the design has something concrete to size against.
 >
-> 📐 The method for envelopes like this — and an [interactive calculator](../../resources/estimation/estimator/) — lives in [resources/estimation](../../resources/estimation/).
+> 📐 The method for envelopes like this — and an [interactive calculator ↗](https://estimation.mhayk.workers.dev/estimator/) — lives in [resources/estimation](../../resources/estimation/).
 
 Assume a mid-size API platform:
 

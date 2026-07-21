@@ -6,10 +6,10 @@ Based on **Chapter 2, "Back-of-the-Envelope Estimation"** of *System Design Inte
 
 > Estimation is cross-cutting: it feeds the **Scale Estimation** step of the [Uber](../../designs/01-uber/) and [rate limiter](../../designs/02-rate-limiter/) designs, and every design still to come. This is the reference those write-ups point back to.
 
-**In this folder:**
+**In this folder** — also live at **[estimation.mhayk.workers.dev](https://estimation.mhayk.workers.dev/)**:
 
-- 🧮 **[Interactive calculator](./estimator/)** — type your assumptions, watch every step of the arithmetic
-- 🖨️ **[Printable wall poster](./poster/)** — the three tables + formulas on one A4 sheet, for pinning above your desk
+- 🧮 **[Interactive calculator ↗](https://estimation.mhayk.workers.dev/estimator/)** — type your assumptions, watch every step of the arithmetic ([source](./estimator/))
+- 🖨️ **[Printable wall poster ↗](https://estimation.mhayk.workers.dev/poster/)** — the three tables + formulas on one A4 sheet, for pinning above your desk ([source](./poster/))
 - 🃏 **[Cheat sheet](./cheat-sheet.md)** — active-recall deck for the night before an interview
 
 ---
@@ -147,7 +147,7 @@ You will rarely have the per-box number precisely; state your assumption ("a box
 
 ## ✍️ Worked example — Twitter QPS and storage
 
-Straight from the book (*"these numbers are for this exercise only… not real numbers from Twitter"*), and reproduced exactly by the [interactive calculator](./estimator/) when you feed it these assumptions.
+Straight from the book (*"these numbers are for this exercise only… not real numbers from Twitter"*), and reproduced exactly by the [interactive calculator ↗](https://estimation.mhayk.workers.dev/estimator/) when you feed it these assumptions.
 
 **Assumptions**
 
@@ -218,7 +218,7 @@ From the book, and each one saves you in the room:
 
 - [Latency Numbers Every Programmer Should Know](https://gist.github.com/jboner/2841832) — the canonical gist the book's tables descend from
 - [Interactive "Latency Numbers" by year](https://colin-scott.github.io/personal_website/research/interactive_latency.html) — Colin Scott's tool showing how the numbers evolved 1990→2020, which is where the "physics doesn't improve" lesson comes from
-- The book's own worked examples, reproduced and extended in the [calculator](./estimator/)
+- The book's own worked examples, reproduced and extended in the [calculator ↗](https://estimation.mhayk.workers.dev/estimator/)
 
 ---
 
