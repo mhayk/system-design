@@ -2,7 +2,9 @@
 
 A design study of a ride-hailing platform: matching riders with nearby drivers in real time, tracking locations, and handling trip lifecycle, pricing, and payments at scale.
 
-> Status: 🚧 In progress
+> Status: ✅ Complete
+>
+> A few open design decisions are parked in [`notes.md`](./notes.md) — surge-region modelling and where the trip state machine lives — the kind you'd settle with an interviewer rather than gaps in the write-up.
 
 ---
 

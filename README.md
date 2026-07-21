@@ -19,7 +19,7 @@ The goal is simple: pick a real-world product, break down how it works, and rebu
 
 | # | System | Status | Notes |
 |---|--------|--------|-------|
-| 01 | [Uber](./designs/01-uber/) | 🚧 In progress | Ride-hailing: real-time matching, location tracking, pricing |
+| 01 | [Uber](./designs/01-uber/) | ✅ Complete | Ride-hailing: real-time matching, location tracking, pricing |
 | 02 | [Rate limiter](./designs/02-rate-limiter/) | ✅ Complete | Throttling: five algorithms, Redis counters, the distributed race condition. Ships with a [runnable simulator](./designs/02-rate-limiter/simulator/) — **[try it live ↗](https://rate-limiter.mhayk.workers.dev/)** |
 
 > Status legend: 🚧 In progress · ✅ Complete · 🧊 Planned
@@ -102,7 +102,7 @@ Each design follows a consistent structure so they are easy to compare and revis
 
 A non-exhaustive list of systems I would like to design next:
 
-- [ ] Uber (in progress)
+- [x] Uber
 - [x] Rate limiter
 - [ ] URL shortener (TinyURL)
 - [ ] Chat application (WhatsApp / Messenger)
