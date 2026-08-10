@@ -28,63 +28,63 @@ flowchart TB
 
   subgraph S0["00 · Foundations"]
     direction LR
-    a1["Functional vs<br/>non-functional"] ~~~ a2["Estimation<br/>QPS · storage"] ~~~ a3["Latency<br/>numbers"] ~~~ a4["Percentiles<br/>and the nines"]
+    a1[Functional vs<br/>non-functional] ~~~ a2[Estimation<br/>QPS · storage] ~~~ a3[Latency<br/>numbers] ~~~ a4[Percentiles<br/>and the nines]
   end
 
   subgraph S1["01 · Scaling the web tier"]
     direction LR
-    b1["Vertical vs<br/>horizontal"] ~~~ b2["Load balancers<br/>L4 · L7"] ~~~ b3["Stateless tier<br/>and sessions"] ~~~ b4["SPOF · redundancy<br/>failover"] ~~~ b5["Multi-region<br/>autoscaling"]
+    b1[Vertical vs<br/>horizontal] ~~~ b2[Load balancers<br/>L4 · L7] ~~~ b3[Stateless tier<br/>and sessions] ~~~ b4[SPOF · redundancy<br/>failover] ~~~ b5[Multi-region<br/>autoscaling]
   end
 
   subgraph S2["02 · The data tier"]
     direction LR
-    c1["SQL vs NoSQL"] ~~~ c2["Replication<br/>and lag"] ~~~ c3["Sharding and<br/>partition keys"] ~~~ c4["Hotspots and<br/>resharding"] ~~~ c5["Backups · search<br/>geospatial"]
+    c1[SQL vs<br/>NoSQL] ~~~ c2[Replication<br/>and lag] ~~~ c3[Sharding and<br/>partition keys] ~~~ c4[Hotspots and<br/>resharding] ~~~ c5[Backups · search<br/>geospatial]
   end
 
   subgraph S3["03 · Caching and delivery"]
     direction LR
-    d1["Cache-aside<br/>write-through"] ~~~ d2["TTL · eviction<br/>invalidation"] ~~~ d3["Stampede and<br/>hot keys"] ~~~ d4["CDN and<br/>cache headers"]
+    d1[Cache-aside<br/>write-through] ~~~ d2[TTL · eviction<br/>invalidation] ~~~ d3[Stampede and<br/>hot keys] ~~~ d4[CDN and<br/>cache headers]
   end
 
   subgraph S4["04 · Asynchronous messaging"]
     direction LR
-    e1["Queue vs<br/>publish-subscribe"] ~~~ e2["Partitions · ordering<br/>consumer groups"] ~~~ e3["Delivery semantics<br/>idempotency"] ~~~ e4["Retries · backoff<br/>dead letter queues"] ~~~ e5["Fan-out · EDA<br/>outbox · saga"]
+    e1[Queue vs<br/>publish-subscribe] ~~~ e2[Partitions · ordering<br/>consumer groups] ~~~ e3[Delivery semantics<br/>idempotency] ~~~ e4[Retries · backoff<br/>dead letter queues] ~~~ e5[Fan-out · EDA<br/>outbox · saga]
   end
 
   subgraph S5["05 · Distributed systems theory"]
     direction LR
-    f1["CAP and<br/>PACELC"] ~~~ f2["Consistency<br/>models"] ~~~ f3["Consensus · quorum<br/>leader election"] ~~~ f4["Clocks · split brain<br/>unique IDs"]
+    f1[CAP and<br/>PACELC] ~~~ f2[Consistency<br/>models] ~~~ f3[Consensus · quorum<br/>leader election] ~~~ f4[Clocks · split brain<br/>unique IDs]
   end
 
   subgraph S6["06 · Reliability engineering"]
     direction LR
-    g1["Timeouts · retries<br/>circuit breakers"] ~~~ g2["Load shedding<br/>rate limiting"] ~~~ g3["SLI · SLO<br/>error budgets"] ~~~ g4["Observability<br/>and tracing"] ~~~ g5["Deploys · migrations<br/>chaos"]
+    g1[Timeouts · retries<br/>circuit breakers] ~~~ g2[Load shedding<br/>rate limiting] ~~~ g3[SLI · SLO<br/>error budgets] ~~~ g4[Observability<br/>and tracing] ~~~ g5[Deploys · migrations<br/>chaos]
   end
 
   subgraph S7["07 · Communication and architecture"]
     direction LR
-    h1["Monolith vs<br/>microservices"] ~~~ h2["REST · gRPC<br/>GraphQL"] ~~~ h3["WebSocket · SSE<br/>polling"] ~~~ h4["Gateways · discovery<br/>versioning"]
+    h1[Monolith vs<br/>microservices] ~~~ h2[REST · gRPC<br/>GraphQL] ~~~ h3[WebSocket · SSE<br/>polling] ~~~ h4[Gateways · discovery<br/>versioning]
   end
 
   subgraph S8["08 · Security and tenancy"]
     direction LR
-    i1["AuthN vs AuthZ<br/>OAuth · JWT"] ~~~ i2["Encryption in<br/>transit and at rest"] ~~~ i3["DDoS · WAF<br/>input validation"] ~~~ i4["Multi-tenancy<br/>PII · audit"]
+    i1[AuthN vs AuthZ<br/>OAuth · JWT] ~~~ i2[Encryption in transit<br/>and at rest] ~~~ i3[DDoS · WAF<br/>input validation] ~~~ i4[Multi-tenancy<br/>PII · audit]
   end
 
   subgraph S9["09 · Putting it together"]
     direction LR
-    j1["The four-step<br/>framework"] ~~~ j2["Trade-offs<br/>out loud"] ~~~ j3["The classic<br/>catalogue"] ~~~ j4["Build<br/>the thing"]
+    j1[The four-step<br/>framework] ~~~ j2[Trade-offs<br/>out loud] ~~~ j3[The classic<br/>catalogue] ~~~ j4[Build<br/>the thing]
   end
 
-  S0 -->|"one server is slow<br/>and dies alone"| S1
-  S1 -->|"the database is<br/>now the bottleneck"| S2
-  S2 -->|"the same reads<br/>keep repeating"| S3
-  S3 -->|"the request blocks on<br/>work it need not wait for"| S4
-  S4 -->|"many machines now<br/>and the network lies"| S5
-  S5 -->|"so failure is<br/>the steady state"| S6
-  S6 -->|"and the system<br/>became many services"| S7
-  S7 -->|"with real users<br/>and real attackers"| S8
-  S8 -->|"now assemble it<br/>in 45 minutes"| S9
+  S0 -->|one server is slow<br/>and dies alone| S1
+  S1 -->|the database is<br/>now the bottleneck| S2
+  S2 -->|the same reads<br/>keep repeating| S3
+  S3 -->|the request blocks on work<br/>it need not wait for| S4
+  S4 -->|many machines now<br/>and the network lies| S5
+  S5 -->|so failure is<br/>the steady state| S6
+  S6 -->|and the system<br/>became many services| S7
+  S7 -->|with real users<br/>and real attackers| S8
+  S8 -->|now assemble it<br/>in 45 minutes| S9
 ```
 
 ---
