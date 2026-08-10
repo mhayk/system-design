@@ -32,6 +32,7 @@ Cross-cutting references that serve every design, not just one:
 
 | Resource | What it is |
 |----------|------------|
+| [🧭 The map](./resources/roadmap/) | **The whole subject as a journey** — 162 topics across 10 stages, ordered so each stage answers a question the previous one forced you to ask. A [written curriculum](./resources/roadmap/README.md) with a mind map and per-stage checklists, plus an [interactive map](./resources/roadmap/index.html) that tracks what you have learnt. Start here when you are not sure what to study next. |
 | [📐 Estimation](./resources/estimation/) | Back-of-the-envelope sizing — QPS, storage, bandwidth, latency, availability. A [reference](./resources/estimation/README.md), a [recall deck](./resources/estimation/cheat-sheet.md), and two live tools: an [interactive calculator ↗](https://estimation.mhayk.workers.dev/estimator/) and a [printable wall poster ↗](https://estimation.mhayk.workers.dev/poster/). |
 
 ---
@@ -52,6 +53,7 @@ system-design/
 │       ├── diagrams/          # Architecture, algorithms, distributed concerns
 │       └── simulator/         # Runnable: the five algorithms, tests, CLI, visual
 └── resources/                # Shared, cross-cutting references
+    ├── roadmap/               # The map: the whole subject as a 10-stage journey + interactive tracker
     └── estimation/            # Back-of-the-envelope: reference, deck, poster, calculator
 ```
 

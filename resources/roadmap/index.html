@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The System Design Map — a learning journey</title>
+  <meta name="description" content="Every system design topic on one page, arranged as a journey: ten stages, from vocabulary to distributed consensus. Tick what you know, filter to what you don't." />
+  <meta name="author" content="Mhayk Whandson" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🧭</text></svg>" />
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+
+  :root {
+    --pen: #C0362C;
+    --pen-soft: rgba(192, 54, 44, 0.10);
+    --paper: #F1F3F1;
+    --card: #FBFCFB;
+    --grid: rgba(30, 42, 50, 0.05);
+    --line: #C9D0CB;
+    --ink: #1E2A32;
+    --ink-2: #47585F;
+    --ink-3: #728189;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --a0: #B4553F; --a1: #A5762A; --a2: #6E7F35; --a3: #2F7F73; --a4: #3A6E93;
+    --a5: #565AA0; --a6: #8A4A82; --a7: #A94765; --a8: #5C6B72; --a9: #47804F;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --pen: #E27B6E; --pen-soft: rgba(226,123,110,0.13);
+      --paper: #14181B; --card: #1A2024; --grid: rgba(220,230,228,0.04);
+      --line: #2E383E;
+      --ink: #E4E8E6; --ink-2: #9DAAAF; --ink-3: #6E7D84;
+      --a0: #D98B74; --a1: #C9A05A; --a2: #9FB06A; --a3: #62B0A2; --a4: #75A8C9;
+      --a5: #8D91D0; --a6: #BC85B4; --a7: #D3899F; --a8: #93A3AA; --a9: #7FB889;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --pen: #E27B6E; --pen-soft: rgba(226,123,110,0.13);
+    --paper: #14181B; --card: #1A2024; --grid: rgba(220,230,228,0.04);
+    --line: #2E383E;
+    --ink: #E4E8E6; --ink-2: #9DAAAF; --ink-3: #6E7D84;
+    --a0: #D98B74; --a1: #C9A05A; --a2: #9FB06A; --a3: #62B0A2; --a4: #75A8C9;
+    --a5: #8D91D0; --a6: #BC85B4; --a7: #D3899F; --a8: #93A3AA; --a9: #7FB889;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    min-height: 100vh;
+    padding: clamp(1rem, 3vw, 2.5rem) clamp(0.85rem, 3vw, 2.5rem) 4rem;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  /* ---------- header ---------- */
+  header.top { margin-bottom: 1.6rem; }
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(1.35rem, 3.4vw, 2rem);
+    font-weight: 700;
+    margin: 0 0 0.45rem;
+    text-wrap: balance;
+  }
+  .lead { color: var(--ink-2); max-width: 62ch; margin: 0 0 1.3rem; font-size: 0.95rem; }
+  .lead a { color: var(--pen); text-decoration: none; border-bottom: 1px solid transparent; }
+  .lead a:hover { border-bottom-color: var(--pen); }
+
+  /* ---------- overall progress ---------- */
+  .overall {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    flex-wrap: wrap;
+  }
+  .overall .stat { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-2); white-space: nowrap; }
+  .overall .stat b { color: var(--ink); font-size: 1.05rem; }
+  .bar {
+    flex: 1 1 220px;
+    height: 8px;
+    background: var(--pen-soft);
+    border-radius: 999px;
+    overflow: hidden;
+    min-width: 160px;
+  }
+  .bar i { display: block; height: 100%; background: var(--pen); width: 0; transition: width 260ms ease; }
+
+  /* ---------- controls ---------- */
+  .controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 1rem 0 0.4rem;
+  }
+  .search {
+    flex: 1 1 220px;
+    min-width: 170px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    padding: 0.44rem 0.7rem;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--ink);
+  }
+  .search:focus { outline: 2px solid var(--pen); outline-offset: 1px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; background: var(--card); }
+  .seg button {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    padding: 0.44rem 0.7rem;
+    background: transparent;
+    border: 0;
+    border-right: 1px solid var(--line);
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { background: var(--pen); color: #fff; }
+  .ghost {
+    font-family: var(--mono); font-size: 0.72rem;
+    padding: 0.44rem 0.7rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 5px;
+    color: var(--ink-2); cursor: pointer;
+  }
+  .ghost:hover { border-color: var(--pen); color: var(--pen); }
+
+  /* ---------- stage rail ---------- */
+  .rail {
+    display: flex; gap: 0.45rem; overflow-x: auto; padding: 0.7rem 0 0.9rem;
+    margin-bottom: 1.4rem; border-bottom: 1px solid var(--line);
+    scrollbar-width: thin;
+  }
+  .rail a {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 0.45rem;
+    padding: 0.4rem 0.65rem;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    text-decoration: none; color: var(--ink-2);
+    font-family: var(--mono); font-size: 0.72rem;
+    white-space: nowrap;
+  }
+  .rail a:hover { border-color: var(--accent, var(--pen)); color: var(--ink); }
+  .rail a .num { color: var(--accent); font-weight: 700; }
+  .ring { flex: 0 0 auto; }
+  .ring circle { fill: none; stroke-width: 2.5; }
+  .ring .track { stroke: var(--line); }
+  .ring .fill { stroke: var(--accent); transition: stroke-dasharray 260ms ease; }
+
+  /* ---------- branches ---------- */
+  .branch {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 1.1rem 1.2rem 1.2rem;
+    margin-bottom: 1.1rem;
+    scroll-margin-top: 1rem;
+  }
+  .branch.empty { display: none; }
+  .b-head { display: flex; align-items: flex-start; gap: 0.7rem; margin-bottom: 0.15rem; }
+  .b-head .emoji { font-size: 1.35rem; line-height: 1.2; }
+  .b-title {
+    font-family: var(--mono); font-weight: 700;
+    font-size: 1rem; margin: 0;
+    display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+  }
+  .b-title .num { color: var(--accent); font-size: 0.78rem; letter-spacing: 0.06em; }
+  .b-count { margin-left: auto; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); white-space: nowrap; }
+  .b-q { color: var(--ink-2); font-size: 0.86rem; margin: 0.15rem 0 0.9rem; max-width: 70ch; }
+  .b-q em { color: var(--ink); font-style: normal; border-bottom: 1px dotted var(--accent); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.3rem 0.55rem 0.3rem 0.4rem;
+    font-size: 0.81rem;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: border-color 120ms, background 120ms;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip:focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
+  .chip .box {
+    width: 13px; height: 13px; flex: 0 0 auto;
+    border: 1.5px solid var(--ink-3); border-radius: 3px;
+    display: grid; place-items: center;
+    font-size: 9px; line-height: 1; color: transparent;
+  }
+  .chip[data-done="1"] { background: color-mix(in srgb, var(--accent) 11%, transparent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .chip[data-done="1"] .box { background: var(--accent); border-color: var(--accent); color: var(--card); }
+  .chip[data-done="1"] .label { color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .chip[data-tier="deep"] .label::after {
+    content: "◇"; font-size: 0.62em; color: var(--ink-3);
+    margin-left: 0.35em; vertical-align: 0.25em;
+  }
+  .chip.hit { border-color: var(--pen); box-shadow: 0 0 0 2px var(--pen-soft); }
+  .chip.next { border-color: var(--pen); border-style: dashed; }
+  .chip[hidden] { display: none; }
+
+  /* ---------- drawer ---------- */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.32);
+    opacity: 0; pointer-events: none; transition: opacity 160ms;
+    z-index: 40;
+  }
+  .scrim[data-open="1"] { opacity: 1; pointer-events: auto; }
+  aside.drawer {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: min(430px, 92vw);
+    background: var(--card);
+    border-left: 1px solid var(--line);
+    z-index: 50;
+    transform: translateX(102%);
+    transition: transform 200ms cubic-bezier(.4,0,.2,1);
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+    padding: 1.4rem 1.4rem 2.5rem;
+  }
+  aside.drawer[data-open="1"] { transform: none; }
+  @media (max-width: 620px) {
+    aside.drawer {
+      top: auto; left: 0; width: auto; max-height: 82vh;
+      border-left: 0; border-top: 1px solid var(--line);
+      border-radius: 10px 10px 0 0;
+      transform: translateY(102%);
+    }
+  }
+  .d-kicker {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 0.35rem;
+  }
+  .d-title { font-family: var(--mono); font-size: 1.08rem; font-weight: 700; margin: 0 0 0.15rem; text-wrap: balance; }
+  .d-tier { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-3); margin: 0 0 1rem; }
+  .d-body p { font-size: 0.9rem; color: var(--ink-2); margin: 0 0 1rem; }
+  .d-body p.summary { color: var(--ink); }
+  .d-field { border-top: 1px dashed var(--line); padding-top: 0.8rem; margin-bottom: 0.9rem; }
+  .d-field h4 {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--ink-3); margin: 0 0 0.3rem; font-weight: 600;
+  }
+  .d-field p { margin: 0; font-size: 0.88rem; color: var(--ink-2); }
+  .d-links { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem; }
+  .d-links a {
+    font-family: var(--mono); font-size: 0.72rem;
+    color: var(--pen); text-decoration: none;
+    border: 1px solid var(--line); border-radius: 4px; padding: 0.25rem 0.5rem;
+  }
+  .d-links a:hover { border-color: var(--pen); }
+  .d-actions { display: flex; gap: 0.5rem; margin-top: 1.2rem; flex-wrap: wrap; }
+  .d-actions button {
+    font-family: var(--mono); font-size: 0.75rem;
+    padding: 0.5rem 0.8rem; border-radius: 5px; cursor: pointer;
+    border: 1px solid var(--line); background: transparent; color: var(--ink-2);
+  }
+  .d-actions button.primary { background: var(--pen); border-color: var(--pen); color: #fff; }
+  .d-actions button:hover { border-color: var(--pen); }
+  .d-close {
+    position: absolute; top: 0.8rem; right: 1rem;
+    background: none; border: 0; color: var(--ink-3);
+    font-size: 1.3rem; cursor: pointer; line-height: 1;
+  }
+  .d-close:hover { color: var(--pen); }
+
+  .no-hits {
+    display: none; text-align: center; padding: 2.5rem 1rem;
+    color: var(--ink-3); font-family: var(--mono); font-size: 0.85rem;
+  }
+  .no-hits[data-show="1"] { display: block; }
+
+  footer.page {
+    margin-top: 2.2rem; padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.78rem; color: var(--ink-3);
+    display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+  }
+  footer.page a { color: var(--pen); text-decoration: none; }
+  footer.page a:hover { border-bottom: 1px solid var(--pen); }
+  footer.page .legend { margin-left: auto; font-family: var(--mono); font-size: 0.72rem; }
+
+  @media print {
+    body { background: #fff; padding: 0.6cm; }
+    .controls, .rail, .overall, .scrim, aside.drawer, footer.page { display: none !important; }
+    .branch { break-inside: avoid; border: 1px solid #bbb; margin-bottom: 0.4cm; padding: 0.35cm; }
+    .chip { border-color: #bbb; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <h1>🧭 The System Design Map</h1>
+    <p class="lead">
+      Every topic worth knowing, on one page, arranged as a journey rather than a pile.
+      Ten stages, each answering one question the previous stage forced you to ask.
+      Tick what you already know; filter down to what you don't. Progress is saved in
+      this browser. Part of the <a href="https://github.com/mhayk/system-design">system-design</a> repository.
+    </p>
+
+    <div class="overall">
+      <div class="stat"><b id="pct">0%</b> of the map</div>
+      <div class="bar"><i id="barfill"></i></div>
+      <div class="stat"><b id="donecount">0</b>/<span id="total">0</span> topics</div>
+      <div class="stat">core: <b id="coredone">0</b>/<span id="coretotal">0</span></div>
+    </div>
+
+    <div class="controls">
+      <input class="search" id="q" type="search" placeholder="Search topics…  ( / )" aria-label="Search topics" />
+      <div class="seg" role="group" aria-label="Filter by depth">
+        <button data-tier="all"  aria-pressed="true">all</button>
+        <button data-tier="core" aria-pressed="false">core</button>
+        <button data-tier="deep" aria-pressed="false">deep ◇</button>
+      </div>
+      <div class="seg" role="group" aria-label="Filter by progress">
+        <button data-state="all"  aria-pressed="true">every topic</button>
+        <button data-state="todo" aria-pressed="false">still to learn</button>
+        <button data-state="done" aria-pressed="false">learnt</button>
+      </div>
+      <button class="ghost" id="next">▶ next up</button>
+      <button class="ghost" id="reset">reset progress</button>
+    </div>
+  </header>
+
+  <nav class="rail" id="rail" aria-label="Stages"></nav>
+
+  <main id="map"></main>
+  <p class="no-hits" id="nohits">Nothing matches that filter.</p>
+
+  <footer class="page">
+    <span>Built by <a href="https://github.com/mhayk">Mhayk Whandson</a>.</span>
+    <a href="https://github.com/mhayk/system-design/tree/main/resources/roadmap">Source &amp; the written journey ↗</a>
+    <span class="legend">◇ = go deeper later · click a topic for the detail</span>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Topic detail" tabindex="-1">
+  <button class="d-close" id="dclose" aria-label="Close">×</button>
+  <p class="d-kicker" id="dkicker"></p>
+  <h2 class="d-title" id="dtitle"></h2>
+  <p class="d-tier" id="dtier"></p>
+  <div class="d-body">
+    <p class="summary" id="dsummary"></p>
+    <div class="d-field"><h4>The question it answers</h4><p id="dq"></p></div>
+    <div class="d-field"><h4>Where it bites</h4><p id="dg"></p></div>
+    <div class="d-field" id="dlinkwrap"><h4>Meet it here</h4><div class="d-links" id="dlinks"></div></div>
+  </div>
+  <div class="d-actions">
+    <button class="primary" id="dtoggle">Mark as learnt</button>
+    <button id="dnext">Next topic →</button>
+  </div>
+</aside>
+
+<script>
+/* ------------------------------------------------------------------ *
+ * The map. Ten stages; each topic carries the three things worth
+ * remembering about it — what it is, the question it answers, and the
+ * place it goes wrong. Keys are short because there are a lot of them:
+ *   t = title · tier = core|deep · s = summary · q = question · g = gotcha
+ *   x = [[label, href], …] links into this repository
+ * ------------------------------------------------------------------ */
+const MAP = [
+{
+  emoji: "🧱", title: "Foundations", short: "Foundations",
+  question: "Before a single box is drawn: <em>what</em> are we building, and <em>how big</em> is it?",
+  topics: [
+    { t:"Functional requirements", tier:"core",
+      s:"The verbs — what the system must actually do, written as a short list a stranger could test against.",
+      q:"What does 'done' mean for this system?",
+      g:"Interviewers deliberately give you a one-line prompt. Designing before you have agreed the verbs is how you build the wrong thing beautifully." },
+    { t:"Non-functional requirements", tier:"core",
+      s:"The adverbs — how fast, how available, how consistent, how many. These, not the features, decide the architecture.",
+      q:"What properties must hold while it does those things?",
+      g:"'Highly available' and 'strongly consistent' are a request to pick one. Pin numbers to the adjectives early." },
+    { t:"Scoping questions", tier:"core",
+      s:"The two minutes of clarifying questions that turn an open prompt into a bounded problem: who, how many, read-heavy or write-heavy, global or regional.",
+      q:"Which 10% of this problem am I actually solving?",
+      g:"Asking nothing looks confident and reads as guessing. Asking everything burns the clock — five good questions is the budget." },
+    { t:"Back-of-the-envelope estimation", tier:"core",
+      s:"Turning assumptions into QPS, storage, and bandwidth in a couple of lines of arithmetic, so the design has numbers attached.",
+      q:"How big does this thing have to be?",
+      g:"Precision is not the point — the order of magnitude is. 3,000 QPS and 300,000 QPS are different architectures; 3,000 and 3,500 are not.",
+      x:[["The estimation reference","https://github.com/mhayk/system-design/tree/main/resources/estimation"],["Live calculator","https://estimation.mhayk.workers.dev/estimator/"]] },
+    { t:"Latency numbers", tier:"core",
+      s:"The ladder every decision hangs off: L1 ~1ns, memory ~100ns, SSD read ~100µs, disk seek ~10ms, cross-continent round trip ~150ms.",
+      q:"Is the thing I just proposed physically fast enough?",
+      g:"Memory is roughly a million times quicker than a transatlantic hop. Almost every caching and placement argument is that one ratio." },
+    { t:"Throughput vs latency", tier:"core",
+      s:"Throughput is how much work per second; latency is how long one unit waits. Batching trades one for the other.",
+      q:"Am I optimising for volume or for the individual request?",
+      g:"You can improve throughput and make every user's experience worse. Say which you are buying." },
+    { t:"Percentiles: p50, p95, p99", tier:"core",
+      s:"The distribution, not the mean. p99 is the experience of your heaviest, most valuable users.",
+      q:"How bad is the bad case, and how often is it?",
+      g:"Averages hide everything. A page that fans out to 100 services hits its own p99 on nearly every request — tail latency compounds." },
+    { t:"Availability & the nines", tier:"core",
+      s:"99.9% is 8.7 hours of downtime a year; 99.99% is 52 minutes; 99.999% is 5 minutes.",
+      q:"How much downtime is the business actually willing to buy?",
+      g:"Each extra nine multiplies cost and operational discipline. Serial dependencies multiply their availabilities — five 99.9% services in a chain give you 99.5%." },
+    { t:"DAU, peak factor, read:write ratio", tier:"core",
+      s:"The three multipliers that convert a user count into a load figure: daily actives, the peak-to-average factor (2–5×), and how lopsided reads are against writes.",
+      q:"What does a bad Tuesday evening look like?",
+      g:"Sizing for the average guarantees you fall over at peak. A 100:1 read:write ratio is the whole argument for read replicas and caching." },
+    { t:"Cost as a design constraint", tier:"deep",
+      s:"Egress, storage tiers, cross-AZ traffic and idle capacity — the parts of an architecture that show up on an invoice rather than a dashboard.",
+      q:"What does this design cost per million requests?",
+      g:"Cross-region replication and CDN egress quietly dominate bills. 'Just replicate everywhere' is a budget decision disguised as a technical one." }
+  ]
+},
+{
+  emoji: "📈", title: "Scaling the web tier", short: "Web tier",
+  question: "One server is answering everything. It is <em>slow</em>, and if it dies <em>everything</em> dies. Now what?",
+  topics: [
+    { t:"Client–server model", tier:"core",
+      s:"The request path end to end: client → DNS → load balancer → web tier → data tier, with a cache and a CDN cutting corners along the way.",
+      q:"Where does a request physically go?",
+      g:"Most designs go wrong at a hop nobody drew. Draw every hop before optimising any of them." },
+    { t:"DNS & GeoDNS", tier:"core",
+      s:"Name-to-address resolution, cached at every layer by TTL; GeoDNS returns a different address depending on where you ask from.",
+      q:"How does a user find the nearest healthy entry point?",
+      g:"DNS TTLs mean failover is never instant — clients keep hitting the dead address until their cache expires. It is a routing tool, not a failover tool." },
+    { t:"Vertical vs horizontal scaling", tier:"core",
+      s:"Scale up (a bigger machine) or scale out (more machines). Up is simpler; out is the only one without a ceiling.",
+      q:"Do I buy a bigger box or another box?",
+      g:"Vertical scaling has no failover story — a single big machine is still a single machine. Horizontal scaling is what forces statelessness on you." },
+    { t:"Load balancer", tier:"core",
+      s:"The component that spreads traffic over the pool, hides individual server addresses, and pulls dead ones out of rotation.",
+      q:"How is traffic shared, and how do dead servers stop receiving it?",
+      g:"You just moved the single point of failure into the load balancer. It needs a pair and a floating address of its own." },
+    { t:"L4 vs L7 load balancing", tier:"core",
+      s:"L4 routes on IP and port and is fast and dumb; L7 reads the HTTP request and can route by path, host, header or cookie.",
+      q:"Does routing need to understand the request?",
+      g:"L7 terminates TLS and becomes a CPU-bound component in its own right. Path-based routing is only possible above L4." },
+    { t:"Balancing algorithms", tier:"core",
+      s:"Round robin, weighted round robin, least connections, least response time, IP hash — the rule for picking the next server.",
+      q:"Which server gets this request?",
+      g:"Round robin assumes requests cost the same. With heterogeneous work, least-connections is usually the safer default." },
+    { t:"Consistent hashing", tier:"core",
+      s:"Mapping keys and servers onto the same ring so that adding or removing a node only moves k/n keys, not all of them.",
+      q:"How do I add a node without invalidating every cache entry?",
+      g:"A naive ring distributes unevenly — virtual nodes are not an optimisation, they are required for it to work at all." },
+    { t:"Stateless web tier", tier:"core",
+      s:"Servers keep no per-user state, so any server can serve any request and the pool can grow, shrink and be replaced freely.",
+      q:"Can I kill any server at any moment?",
+      g:"In-process caches, uploaded files on local disk and in-memory sessions are the three things that quietly make a 'stateless' tier stateful." },
+    { t:"Session storage & affinity", tier:"core",
+      s:"Push session state into a shared store (Redis, a database, a signed cookie) instead of pinning users to a server.",
+      q:"Where does 'who is logged in' live?",
+      g:"Sticky sessions look like a free fix and then break autoscaling, deploys and failover all at once." },
+    { t:"Single point of failure (SPOF)", tier:"core",
+      s:"Any component whose loss takes the system down: one load balancer, one primary database, one region, one shared config service.",
+      q:"What in this diagram exists exactly once?",
+      g:"SPOFs hide in the boring boxes — DNS, the certificate, the deployment pipeline, the one Redis holding every session." },
+    { t:"Redundancy & N+1", tier:"core",
+      s:"Running more capacity than you need so a failure is absorbed rather than felt. N+1 survives one loss; N+2 survives one loss during maintenance.",
+      q:"How many of these can die before users notice?",
+      g:"Redundant capacity that has never taken traffic is a guess. If the standby is never exercised, assume it does not work." },
+    { t:"Health checks & failover", tier:"core",
+      s:"Periodic probes that decide whether an instance is in rotation, and the machinery that promotes a replacement when it is not.",
+      q:"How does the system learn a component is sick?",
+      g:"Shallow checks (is the port open?) keep broken servers in rotation; deep checks can take the whole fleet out when a shared dependency wobbles." },
+    { t:"Active-active vs active-passive", tier:"core",
+      s:"Both sites serving traffic, or one serving and one waiting. Active-active doubles usable capacity and difficulty.",
+      q:"Is the second copy earning its keep or just waiting?",
+      g:"Active-active means concurrent writes in two places, which is a data-consistency problem wearing an availability costume." },
+    { t:"Multi-data-centre & multi-region", tier:"core",
+      s:"Serving users from the nearest site and surviving the loss of an entire one; traffic steered by GeoDNS or anycast.",
+      q:"What happens when a whole region goes dark?",
+      g:"The hard part is never the traffic — it is replicating data across regions and deciding what to do about the writes in flight." },
+    { t:"Autoscaling", tier:"core",
+      s:"Adding and removing instances against a metric (CPU, queue depth, request rate) with cooldowns to avoid oscillation.",
+      q:"Who adds capacity at 3am?",
+      g:"Scaling reacts on a timescale of minutes; traffic spikes on a timescale of seconds. Autoscaling is not a defence against a flash crowd — headroom is." },
+    { t:"Reverse proxy, LB & API gateway", tier:"deep",
+      s:"Three overlapping boxes: the proxy shields origins, the balancer spreads load, the gateway does auth, rate limiting and routing per API.",
+      q:"Which concerns live at the edge?",
+      g:"Piling every cross-cutting concern into one edge box makes it the most complex and most critical thing you own." }
+  ]
+},
+{
+  emoji: "🗄️", title: "The data tier", short: "Data",
+  question: "The servers scale now. The <em>database</em> does not — one machine holds every row and every read.",
+  topics: [
+    { t:"SQL vs NoSQL", tier:"core",
+      s:"Relational stores give joins, transactions and a schema; non-relational stores give scale-out and flexible shape, and hand the joins back to you.",
+      q:"Do my access patterns need relationships or throughput?",
+      g:"'NoSQL scales better' is a slogan. Pick from the query patterns: if you cannot enumerate them, you are not ready to choose." },
+    { t:"NoSQL families", tier:"core",
+      s:"Key-value (Redis, DynamoDB), document (MongoDB), wide-column (Cassandra, HBase), graph (Neo4j) — four different answers to four different shapes.",
+      q:"What shape is my data, really?",
+      g:"Wide-column stores make you design the table per query. Choosing the family is choosing which queries stay cheap forever." },
+    { t:"OLTP vs OLAP", tier:"core",
+      s:"Transactional stores serve many small reads and writes; analytical stores scan enormous ranges for aggregates. Row-oriented versus column-oriented.",
+      q:"Is this serving a user or answering a business question?",
+      g:"Running analytics on the production primary is the classic way to take down a live system with a dashboard." },
+    { t:"Object, block & file storage", tier:"core",
+      s:"Object storage (S3) for immutable blobs at any size, block for databases, file for shared POSIX semantics.",
+      q:"Where do the images, videos and backups go?",
+      g:"Never put blobs in the database. Store the object, keep the URL and the metadata in the row." },
+    { t:"Normalisation & denormalisation", tier:"core",
+      s:"Normalise to keep one copy of each fact; denormalise to avoid joins on the read path, and accept that updates now touch several places.",
+      q:"Am I optimising for write correctness or read speed?",
+      g:"Every denormalised copy is a consistency obligation. Write down who is responsible for keeping it true." },
+    { t:"Indexes: B-tree vs LSM-tree", tier:"core",
+      s:"B-trees update in place and favour reads; LSM-trees append and compact, favouring writes at the cost of read amplification.",
+      q:"Is this workload write-heavy or read-heavy at the storage layer?",
+      g:"Every index speeds a read and taxes a write. Unused indexes are pure cost, and compaction spikes are real latency." },
+    { t:"Leader–follower replication", tier:"core",
+      s:"One node takes writes and streams the changes to read replicas, which serve reads and stand ready for promotion.",
+      q:"How do I survive losing the database, and serve more reads?",
+      g:"Promotion is not free — the new leader may be missing the tail of the log, and split brain is one network partition away." },
+    { t:"Replication lag", tier:"core",
+      s:"The window in which a replica has not yet applied the leader's latest writes — usually milliseconds, occasionally minutes.",
+      q:"Can a user read something they just wrote?",
+      g:"Write to the leader, read from a replica, and the user's own comment vanishes. Route reads-after-writes to the leader or pin by session." },
+    { t:"Multi-leader & leaderless", tier:"deep",
+      s:"Accept writes in more than one place: multi-leader for geo-distribution, leaderless (Dynamo-style) with quorums and repair.",
+      q:"Can I take writes in two regions at once?",
+      g:"You have just signed up for conflict resolution. Last-write-wins silently drops data; CRDTs or explicit merges are the honest answers." },
+    { t:"Quorums (R + W > N)", tier:"deep",
+      s:"Read from R replicas, write to W, and if R + W exceeds N the sets must overlap, so a read sees the latest write.",
+      q:"How do I get consistency without a leader?",
+      g:"The overlap guarantees you *see* the newest value; it does not tell you which of several values is newest without versioning." },
+    { t:"Sharding / partitioning", tier:"core",
+      s:"Splitting one logical dataset over many machines so both data and load divide. The step you take when replicas can no longer help.",
+      q:"What do I do when the write volume exceeds one machine?",
+      g:"Sharding costs you cross-shard joins, cross-shard transactions and global uniqueness. Delay it as long as honestly possible." },
+    { t:"Partition strategies", tier:"core",
+      s:"Range (ordered scans, easy hotspots), hash (even spread, no ranges), directory/lookup (flexible, adds a hop), geo (locality and compliance).",
+      q:"What is the shard key?",
+      g:"The shard key is the most expensive decision in the design and the hardest to change. Pick it from the dominant query, not the primary key." },
+    { t:"Hotspots & the celebrity problem", tier:"core",
+      s:"One key attracting a disproportionate share of traffic — a viral post, a popular seller, a single busy tenant.",
+      q:"What happens when 1% of keys take 90% of the load?",
+      g:"Perfectly even hashing does not save you from an uneven *workload*. Split the hot key, add a per-key cache, or shard it further." },
+    { t:"Resharding", tier:"core",
+      s:"Growing the cluster and moving data with minimal disruption, usually via consistent hashing plus a live copy-and-cutover.",
+      q:"How do I go from 8 shards to 16 without downtime?",
+      g:"Doing this under load, for the first time, during an incident is the worst possible sequence. Rehearse it early." },
+    { t:"Cross-shard queries", tier:"deep",
+      s:"Joins, aggregations and transactions that span shards, resolved by scatter-gather, a denormalised read model, or refusing to support them.",
+      q:"What about the queries that don't fit the shard key?",
+      g:"Scatter-gather is bounded by the slowest shard, so it inherits every shard's tail latency at once." },
+    { t:"Secondary indexes when sharded", tier:"deep",
+      s:"Local indexes are per-shard and cheap to write but need scatter-gather to read; global indexes are the reverse.",
+      q:"How do I query by something that isn't the shard key?",
+      g:"Global secondary indexes are asynchronously updated — reading your own write through one is not guaranteed." },
+    { t:"Federation", tier:"deep",
+      s:"Splitting by function rather than by row: users in one database, orders in another, each scaled on its own terms.",
+      q:"Can I split the database before I have to shard it?",
+      g:"Cross-database joins and transactions disappear the moment you federate — which is usually the point at which services appear too." },
+    { t:"Backups, PITR & disaster recovery", tier:"core",
+      s:"Snapshots plus a write-ahead log let you restore to any second; RPO is how much data you may lose, RTO is how long recovery takes.",
+      q:"What are my RPO and RTO, in numbers?",
+      g:"A backup that has never been restored is a hypothesis. Replication is not a backup — it replicates the DELETE too." },
+    { t:"Retention, archival & tiering", tier:"deep",
+      s:"Moving cold data to cheaper storage and deleting what you are not allowed to keep, on a schedule.",
+      q:"What happens to data nobody has read in a year?",
+      g:"Unbounded tables are a slow-motion outage: indexes stop fitting in memory long before disk fills up." },
+    { t:"Search & the inverted index", tier:"deep",
+      s:"A term → document-list map that makes full-text search fast, built by an indexing pipeline fed from the source of truth.",
+      q:"How do I search text without scanning every row?",
+      g:"The search cluster is a derived store, not a database. Never let it become the only copy of anything." },
+    { t:"Time-series storage", tier:"deep",
+      s:"Append-only, timestamp-keyed data with downsampling and retention — metrics, telemetry, prices.",
+      q:"How do I store a billion measurements cheaply?",
+      g:"Cardinality, not volume, is what kills time-series stores. One unbounded label ruins the cluster." },
+    { t:"Geospatial indexing", tier:"deep",
+      s:"Geohash, quadtree, S2 and R-trees — turning two dimensions into something a one-dimensional index can serve for 'who is near me?'.",
+      q:"How do I find the nearest N without scanning the world?",
+      g:"Geohash neighbours can be far apart in string space at cell boundaries — you must query the surrounding cells too.",
+      x:[["Uber: matching & location","https://github.com/mhayk/system-design/tree/main/designs/01-uber"]] },
+    { t:"Change data capture (CDC)", tier:"deep",
+      s:"Streaming a database's commit log into other systems so caches, search indexes and warehouses follow automatically.",
+      q:"How do derived stores stay in step with the source of truth?",
+      g:"CDC gives you eventual consistency with a lag you must monitor — and a schema change upstream can break every consumer." }
+  ]
+},
+{
+  emoji: "⚡", title: "Caching & delivery", short: "Caching",
+  question: "Reads outnumber writes 100 to 1. Why is the database <em>answering the same question</em> over and over?",
+  topics: [
+    { t:"Why cache", tier:"core",
+      s:"Keeping a copy of expensive results close to the reader, cutting both latency and load on the origin at the same time.",
+      q:"Which of these reads are identical and repeated?",
+      g:"A cache is a second source of truth with no owner. Every one you add is a staleness bug waiting for a schedule." },
+    { t:"Cache-aside (lazy loading)", tier:"core",
+      s:"The application checks the cache, and on a miss reads the origin and populates the cache itself. The default pattern.",
+      q:"How does data get into the cache in the first place?",
+      g:"Every cold key pays a full origin read, so a cold start after a flush is a stampede. Only cached data is ever cached — nothing preloads." },
+    { t:"Read-through", tier:"core",
+      s:"The cache itself fetches from the origin on a miss, so the application only ever talks to the cache.",
+      q:"Can I keep the fetch logic out of the application?",
+      g:"Simpler calling code, less control: you cannot easily special-case which misses are worth serving." },
+    { t:"Write-through, write-back, write-around", tier:"core",
+      s:"Write to cache and origin together (consistent, slower); write to cache and flush later (fast, loses data on crash); write straight to origin (avoids polluting the cache).",
+      q:"What happens to the cache on a write?",
+      g:"Write-back is the only one that can lose acknowledged data. Write-around guarantees the next read is a miss." },
+    { t:"TTL & expiry", tier:"core",
+      s:"An expiry clock on each entry — the crudest and most reliable invalidation strategy there is.",
+      q:"How stale am I willing to be?",
+      g:"Too short and the cache stops absorbing load; too long and users see ghosts. Identical TTLs set together expire together — jitter them." },
+    { t:"Eviction policies", tier:"core",
+      s:"LRU, LFU, FIFO and random — the rule for what leaves when the cache is full.",
+      q:"Which entry gets thrown out?",
+      g:"LRU is defeated by a large scan, which evicts the whole working set. LFU resists that but clings to yesterday's popular keys." },
+    { t:"Cache invalidation", tier:"core",
+      s:"Actively removing or updating entries when the underlying data changes, rather than waiting for a TTL.",
+      q:"Who tells the cache the truth has changed?",
+      g:"The hard part is knowing every key affected by one write. Versioned keys and key namespacing beat trying to enumerate them." },
+    { t:"Stampede / thundering herd", tier:"core",
+      s:"A popular key expires and a thousand concurrent misses hit the origin simultaneously.",
+      q:"What happens the moment a hot key expires?",
+      g:"The fix is a per-key lock, a single refresher, or serving stale while one request revalidates — not a longer TTL." },
+    { t:"Hot key problem", tier:"core",
+      s:"One key so popular that the single cache node holding it saturates, even though the cluster is idle.",
+      q:"Can one key overload one node?",
+      g:"Sharding the cache does not help a single key. Replicate it across nodes or push a copy into each application process." },
+    { t:"Distributed cache", tier:"core",
+      s:"A shared cache tier (Redis, Memcached) sharded across nodes with consistent hashing, so all servers see the same entries.",
+      q:"How do 200 web servers share one cache?",
+      g:"Now the cache needs replication, failover and a memory budget of its own — it has become infrastructure, not an optimisation." },
+    { t:"Multi-tier caching", tier:"deep",
+      s:"A small in-process cache in front of a shared remote cache in front of the origin, each absorbing what the next cannot.",
+      q:"Can I avoid even the network hop to Redis?",
+      g:"In-process caches are per-instance, so invalidation is now a broadcast problem and your servers can disagree." },
+    { t:"Negative caching", tier:"deep",
+      s:"Caching 'this does not exist' so repeated lookups for missing keys stop reaching the origin.",
+      q:"What stops a flood of requests for things that aren't there?",
+      g:"Without it, a scan of random IDs becomes a free denial of service against the database." },
+    { t:"Bloom filter", tier:"deep",
+      s:"A tiny probabilistic set: definitely-not-present or maybe-present, at a fraction of the memory of the real set.",
+      q:"Can I skip the lookup entirely?",
+      g:"False positives are allowed, false negatives are not — and a standard Bloom filter cannot delete." },
+    { t:"CDN & edge caching", tier:"core",
+      s:"Serving static — and increasingly dynamic — content from a point of presence near the user, cutting round-trip time and origin load.",
+      q:"How do I stop crossing an ocean for a logo?",
+      g:"Purging a CDN is slow and global. Version asset URLs instead of invalidating them, and mind the cost of egress." },
+    { t:"Cache-Control, ETag & revalidation", tier:"core",
+      s:"The HTTP headers that tell every cache on the path — browser, proxy, CDN — how long to keep a response and how to check it cheaply.",
+      q:"How do I cache correctly without writing any code?",
+      g:"A missing Vary header serves one user's personalised page to everyone. Cache headers are the cheapest big win in a design." },
+    { t:"Browser & client cache", tier:"deep",
+      s:"The copy nearest the user: HTTP cache, local storage, service workers, and prefetching.",
+      q:"Can the fastest request be the one never sent?",
+      g:"You cannot invalidate what is on someone's laptop. Anything cached client-side must be safe to be stale or versioned in its URL." }
+  ]
+},
+{
+  emoji: "📨", title: "Asynchronous messaging", short: "Async",
+  question: "The request is waiting on work it <em>doesn't need to wait for</em>. How do components stop blocking each other?",
+  topics: [
+    { t:"Sync vs async", tier:"core",
+      s:"Do the work now and make the caller wait, or accept the request, acknowledge it, and do the work behind the scenes.",
+      q:"Does the user need the result before I can answer?",
+      g:"Going async changes the contract: the answer becomes 'accepted', and you now owe the user a way to find out what happened." },
+    { t:"Message queue", tier:"core",
+      s:"A durable buffer between producer and consumer. Point-to-point: each message is handled by exactly one consumer.",
+      q:"How do I absorb a spike without dropping work?",
+      g:"A queue turns an overload into a delay, which is better — but an unbounded queue just hides the fact that you are permanently under-provisioned." },
+    { t:"Publish–subscribe", tier:"core",
+      s:"One message, many independent subscribers, each with its own copy and its own pace. The publisher does not know who is listening.",
+      q:"How do several systems react to the same event?",
+      g:"Nobody knows who the consumers are any more. Debugging 'what happened after this event' becomes an archaeology exercise without tracing." },
+    { t:"Queue vs topic: choosing", tier:"core",
+      s:"A queue distributes work (one job, one worker); a topic distributes facts (one event, every interested party).",
+      q:"Am I handing out work, or announcing something?",
+      g:"Using a topic for work distribution duplicates the job; using a queue for events couples you to the one consumer that drains it." },
+    { t:"Topics, partitions & consumer groups", tier:"core",
+      s:"A topic is split into partitions for parallelism; a consumer group shares them out so each partition has exactly one reader in the group.",
+      q:"How do I scale consumption and keep order at the same time?",
+      g:"More consumers than partitions means idle consumers. Partition count is a capacity decision that is awkward to change later." },
+    { t:"Broker landscape", tier:"core",
+      s:"Kafka (a replayable partitioned log), RabbitMQ (flexible routing, per-message ack), SQS/SNS (managed queue and fan-out), NATS (light and fast).",
+      q:"Do I need a log I can replay, or a queue that forgets?",
+      g:"Kafka retains and replays; classic queues delete on ack. Picking the wrong one shows up the day you need to reprocess history." },
+    { t:"Producer/consumer decoupling", tier:"core",
+      s:"The two sides share only a message contract: they deploy, scale, fail and restart independently.",
+      q:"Can the consumer be down for ten minutes without anyone noticing?",
+      g:"The message schema is now a public API. Add fields, never repurpose them — you cannot redeploy the messages already in flight." },
+    { t:"Delivery semantics", tier:"core",
+      s:"At-most-once (may lose), at-least-once (may duplicate), exactly-once (expensive, and usually really at-least-once plus idempotency).",
+      q:"Is losing a message or duplicating it the worse outcome?",
+      g:"Nearly every real system is at-least-once. If you have not designed for duplicates, you have chosen at-most-once by accident." },
+    { t:"Idempotency & dedup keys", tier:"core",
+      s:"Making a repeated operation harmless — a natural key, an idempotency token, or a processed-ID set the consumer checks first.",
+      q:"What happens if this message arrives twice?",
+      g:"'Charge the card' is not idempotent and retries are inevitable. This is the single most valuable habit in async design." },
+    { t:"Ordering & partition keys", tier:"core",
+      s:"Order is only guaranteed within a partition, so events that must be sequential need the same key.",
+      q:"Do these two messages have to happen in order?",
+      g:"Global ordering means one partition, which means no parallelism. Order per user or per entity — never per topic." },
+    { t:"Backpressure & consumer lag", tier:"core",
+      s:"Lag is how far consumers trail production; backpressure is the mechanism that slows producers rather than letting the buffer explode.",
+      q:"What happens when consumers cannot keep up?",
+      g:"Consumer lag is the most useful alert in an async system, and the one most often left unconfigured until an incident." },
+    { t:"Retries, backoff & jitter", tier:"core",
+      s:"Retrying a failed message with exponentially growing waits and randomness, so retries neither hammer nor synchronise.",
+      q:"How do I retry without making the outage worse?",
+      g:"Without jitter, every client retries at the same instant and you have built a self-inflicted DDoS. Retries also need a cap." },
+    { t:"Dead letter queue (DLQ)", tier:"core",
+      s:"A side channel for messages that failed repeatedly, so the main queue keeps flowing and failures stay inspectable.",
+      q:"Where do the messages that will never succeed go?",
+      g:"A DLQ nobody monitors is a data-loss folder with extra steps. Alert on depth, and plan for replay." },
+    { t:"Poison messages", tier:"deep",
+      s:"A single malformed message that crashes the consumer, gets redelivered, and crashes it again — blocking the partition behind it.",
+      q:"Can one bad message stop the whole queue?",
+      g:"Head-of-line blocking on an ordered partition can halt every downstream user. Bound the attempts and shunt it aside." },
+    { t:"Fan-out: on write vs on read", tier:"core",
+      s:"Precompute and push into every recipient's view at write time, or assemble it at read time. Feeds live or die by this choice.",
+      q:"Do I pay the cost when it is written or when it is read?",
+      g:"Fan-out on write is fast to read and catastrophic for a user with 50 million followers — real systems use a hybrid for celebrities." },
+    { t:"Job & task queues", tier:"core",
+      s:"Background workers pulling units of work: thumbnails, emails, exports, reports — everything the request path should not do.",
+      q:"What can I move off the critical path?",
+      g:"Long jobs need progress, cancellation and visibility timeouts, or they get retried while still running." },
+    { t:"Delayed & scheduled messages", tier:"deep",
+      s:"Messages that become visible later — reminders, retry timers, expiry sweeps — via delay queues or a scheduler service.",
+      q:"How do I make something happen in four hours?",
+      g:"Per-item timers do not scale to millions. Bucket by time window, or use a store designed for it." },
+    { t:"Event-driven architecture", tier:"core",
+      s:"Services announce facts that happened; other services decide what to do about them. Choreography instead of orchestration.",
+      q:"How do services collaborate without calling each other?",
+      g:"No single place describes the flow any more. Great for decoupling, hard for reasoning — invest in tracing before you need it." },
+    { t:"Event sourcing", tier:"deep",
+      s:"Storing the sequence of events as the source of truth and deriving current state by replaying them.",
+      q:"Do I need to know how the state got here, not just what it is?",
+      g:"Schema evolution over years of immutable events is genuinely hard, and snapshots become mandatory as the log grows." },
+    { t:"CQRS", tier:"deep",
+      s:"Separating the write model from one or more read models shaped for querying, usually updated asynchronously.",
+      q:"Do reads and writes want completely different shapes?",
+      g:"The read model is eventually consistent by construction, so the UI must cope with a user not immediately seeing their own change." },
+    { t:"Transactional outbox", tier:"deep",
+      s:"Write the row and the outgoing event in one local transaction; a relay then publishes from the outbox table.",
+      q:"How do I avoid saving the data but losing the event?",
+      g:"Writing to the database and then to the broker is two systems and no transaction — the crash between them loses the event silently." },
+    { t:"Saga pattern", tier:"deep",
+      s:"A long-running transaction split into local steps, each with a compensating action to undo it if a later step fails.",
+      q:"How do I coordinate a multi-service workflow without 2PC?",
+      g:"Compensation is not rollback — the intermediate state was visible. Some steps (a sent email) cannot be compensated at all." },
+    { t:"Stream vs batch processing", tier:"deep",
+      s:"Continuous processing over windows versus periodic jobs over bounded sets. Latency against simplicity and cost.",
+      q:"How fresh does this aggregate need to be?",
+      g:"Windowing forces you to confront late and out-of-order events — event time and processing time are not the same clock." },
+    { t:"Log retention & compaction", tier:"deep",
+      s:"Keeping a bounded log by time, size, or by retaining only the latest value per key.",
+      q:"How long can I replay history for?",
+      g:"A consumer offline longer than the retention window silently skips data when it returns." },
+    { t:"Webhooks", tier:"deep",
+      s:"Pushing events to third parties over HTTP, with signatures, retries and an expectation of duplicates.",
+      q:"How do I notify a system I do not operate?",
+      g:"You inherit the receiver's downtime and their slow endpoints. Deliver from a queue, never from the request path." }
+  ]
+},
+{
+  emoji: "🧠", title: "Distributed systems theory", short: "Theory",
+  question: "There are many machines now, and the network <em>lies</em>. What can still be guaranteed?",
+  topics: [
+    { t:"The fallacies of distributed computing", tier:"core",
+      s:"The network is not reliable, latency is not zero, bandwidth is not infinite, topology changes, and there is more than one administrator.",
+      q:"Which comfortable assumption is this design leaning on?",
+      g:"Every distributed bug is one of these assumptions cashing in. A remote call is not a local call with extra typing." },
+    { t:"CAP theorem", tier:"core",
+      s:"Under a network partition, a system must choose between remaining consistent and remaining available. It cannot do both.",
+      q:"When the link breaks, do I refuse the write or accept a divergent one?",
+      g:"CAP only applies during a partition — 'CP or AP' is a claim about failure behaviour, not everyday operation." },
+    { t:"PACELC", tier:"deep",
+      s:"The honest extension: if partitioned, choose availability or consistency; else, choose latency or consistency.",
+      q:"What am I trading when the network is healthy?",
+      g:"Most of the year there is no partition, so the latency-versus-consistency half is the one you actually live with." },
+    { t:"ACID vs BASE", tier:"core",
+      s:"Atomic, consistent, isolated, durable — versus basically available, soft state, eventually consistent.",
+      q:"Does this data need transactional guarantees?",
+      g:"Systems are rarely wholly one or the other. Payments can be ACID while the activity feed is BASE, in the same product." },
+    { t:"Consistency models", tier:"core",
+      s:"Strong, causal, eventual and everything between — a spectrum of promises about what a read may return.",
+      q:"What is the weakest guarantee this feature can live with?",
+      g:"'Eventually' is unbounded unless you bound it. Ask how long eventual is in the worst case, and monitor that number." },
+    { t:"Session guarantees", tier:"core",
+      s:"Read-your-writes, monotonic reads, monotonic writes — per-client promises that make eventual consistency tolerable in a UI.",
+      q:"Can this one user at least see a coherent story?",
+      g:"Most 'the data disappeared' bug reports are a missing read-your-writes guarantee, not lost data." },
+    { t:"Linearisability vs serialisability", tier:"deep",
+      s:"Linearisability is a recency guarantee on single objects; serialisability is an isolation guarantee over transactions.",
+      q:"Am I promising freshness or promising isolation?",
+      g:"They are orthogonal, and 'strict serialisability' is both. Databases advertise these words loosely — read the fine print." },
+    { t:"Isolation levels", tier:"deep",
+      s:"Read committed, repeatable read, snapshot, serialisable — and the anomalies each one permits.",
+      q:"Which concurrency anomalies can my workload tolerate?",
+      g:"Most databases default to something weaker than you assume. Write skew survives snapshot isolation and eats invariants." },
+    { t:"Consensus: Paxos & Raft", tier:"deep",
+      s:"Protocols that let a group of nodes agree on a value or a log order despite failures — the basis of etcd, ZooKeeper and friends.",
+      q:"How does a cluster agree on anything at all?",
+      g:"Consensus needs a majority, so it costs a round trip and cannot survive losing half the nodes. Never implement it yourself." },
+    { t:"Leader election", tier:"core",
+      s:"Choosing one node to coordinate, with a lease or a term so a stale leader can be recognised and ignored.",
+      q:"Who is in charge right now?",
+      g:"An old leader that has not noticed its own demotion is the classic split-brain writer. Leases must expire, not just be revoked." },
+    { t:"Quorum", tier:"core",
+      s:"Requiring a majority to act, so two disjoint groups can never both make progress.",
+      q:"How many nodes must agree before this counts?",
+      g:"Even-sized clusters buy nothing — six nodes tolerate the same failures as five and are more likely to deadlock a vote." },
+    { t:"Two-phase commit", tier:"deep",
+      s:"A coordinator asks all participants to prepare, then tells them all to commit. Atomic across systems — while everyone is alive.",
+      q:"Can I make two databases commit together?",
+      g:"A coordinator crash after prepare leaves participants holding locks indefinitely. This is why sagas exist." },
+    { t:"Logical clocks", tier:"deep",
+      s:"Lamport timestamps and vector clocks order events by causality rather than by wall clock.",
+      q:"Which of these two writes actually happened first?",
+      g:"Vector clocks detect concurrent updates but do not resolve them — you still need a merge rule." },
+    { t:"Clock skew & NTP", tier:"deep",
+      s:"Machine clocks drift, jump and go backwards; wall-clock time is not a reliable ordering mechanism.",
+      q:"Can I trust a timestamp from another machine?",
+      g:"Last-write-wins on wall clocks silently loses data whenever a clock is a few hundred milliseconds off." },
+    { t:"Heartbeats & failure detection", tier:"core",
+      s:"Periodic liveness signals plus a timeout, which is fundamentally a guess: slow and dead are indistinguishable over a network.",
+      q:"How long before I declare a node dead?",
+      g:"Aggressive timeouts cause false failovers during a GC pause; lenient ones extend every outage. There is no correct value, only a trade." },
+    { t:"Split brain & fencing", tier:"deep",
+      s:"Two nodes both believing they are the leader; fencing tokens let the storage layer reject writes from the stale one.",
+      q:"How do I stop a zombie leader from corrupting data?",
+      g:"A distributed lock without a fencing token does not prevent this — the paused holder wakes up and writes anyway." },
+    { t:"Distributed locks", tier:"deep",
+      s:"Mutual exclusion across machines via a lease in Redis, ZooKeeper or etcd, always with an expiry.",
+      q:"How do two servers avoid doing the same job twice?",
+      g:"Locks with expiry are not safe for correctness on their own — design so that doing the job twice is harmless instead." },
+    { t:"Unique ID generation", tier:"core",
+      s:"Snowflake IDs (timestamp + machine + sequence), UUIDv4/v7, ticket servers, and per-shard ranges.",
+      q:"How do many machines mint unique, sortable IDs?",
+      g:"Auto-increment does not survive sharding, and random UUIDs destroy index locality. Time-ordered IDs also leak your write rate." },
+    { t:"Gossip, anti-entropy & Merkle trees", tier:"deep",
+      s:"Nodes exchange state with random peers to converge on membership, and compare hash trees to find and repair divergent data cheaply.",
+      q:"How does a leaderless cluster heal itself?",
+      g:"Convergence is probabilistic and takes time — during which different nodes legitimately disagree." }
+  ]
+},
+{
+  emoji: "🛡️", title: "Reliability engineering", short: "Reliability",
+  question: "It works. Now: what happens when a <em>dependency</em> gets slow at 2am, and who finds out?",
+  topics: [
+    { t:"Failure modes & blast radius", tier:"core",
+      s:"Enumerating what can break and how far the damage spreads — one user, one shard, one region, everything.",
+      q:"What is the worst thing one failure can reach?",
+      g:"Shared components are blast-radius multipliers. The question is not 'will it fail' but 'how much fails with it'." },
+    { t:"Timeouts", tier:"core",
+      s:"A hard limit on how long any call may wait, set below the caller's own deadline.",
+      q:"How long am I willing to hold this thread?",
+      g:"The default timeout in most clients is infinite. A missing timeout is how one slow dependency exhausts every thread pool upstream." },
+    { t:"Retries & retry storms", tier:"core",
+      s:"Retrying transient failures with backoff, jitter, a budget, and only for operations that are safe to repeat.",
+      q:"Is this failure worth trying again?",
+      g:"Retries multiply load exactly when the system is least able to take it. Retrying through three layers means eight times the traffic." },
+    { t:"Circuit breaker", tier:"core",
+      s:"After enough failures, stop calling a sick dependency entirely, fail fast, and probe occasionally to see if it recovered.",
+      q:"How do I stop making a struggling service worse?",
+      g:"Breakers need a half-open state, or recovery becomes a synchronised stampede the moment they all close." },
+    { t:"Bulkheads", tier:"deep",
+      s:"Isolating resources — separate pools, queues or instances per dependency or tenant — so one saturation does not sink the ship.",
+      q:"Can one noisy caller consume everything?",
+      g:"A single shared connection pool is a bulkhead you forgot to build." },
+    { t:"Load shedding", tier:"core",
+      s:"Deliberately rejecting work when overloaded, prioritising by cost or customer, so the remainder still succeeds.",
+      q:"Would I rather serve 80% well or 100% badly?",
+      g:"Systems without shedding degrade into serving nobody — every request times out after consuming full resources." },
+    { t:"Rate limiting & throttling", tier:"core",
+      s:"Bounding request rate per client with token bucket, leaking bucket, fixed window, sliding log or sliding counter.",
+      q:"How do I protect capacity from any single caller?",
+      g:"The fixed window lets through double the limit at a boundary; the sliding log is exact but memory-hungry. Also: check-then-increment across nodes is a race.",
+      x:[["Design 02 — rate limiter","https://github.com/mhayk/system-design/tree/main/designs/02-rate-limiter"],["Live simulator","https://rate-limiter.mhayk.workers.dev/"]] },
+    { t:"Graceful degradation", tier:"core",
+      s:"Shedding features rather than availability: stale cache instead of fresh, no recommendations instead of no page.",
+      q:"What is the smallest useful version of this response?",
+      g:"Degraded modes that are never exercised do not work. Test them deliberately, or they are decoration." },
+    { t:"SLI, SLO, SLA & error budgets", tier:"core",
+      s:"An indicator you measure, an objective you commit to internally, an agreement with money attached, and the budget of failure the objective permits.",
+      q:"How reliable are we required to be, in numbers?",
+      g:"Without an error budget, every incident argues for more reliability at any price. The budget is what makes 'good enough' a decision." },
+    { t:"Observability: metrics, logs, traces", tier:"core",
+      s:"Metrics for what, logs for why, traces for where. Three different questions, three different tools.",
+      q:"Could I diagnose a novel failure without deploying new code?",
+      g:"Monitoring answers questions you thought of in advance; observability answers the ones you did not." },
+    { t:"Distributed tracing", tier:"core",
+      s:"A correlation ID threaded through every hop, so one user's request can be reconstructed across a dozen services.",
+      q:"Which of the fifteen services made this request slow?",
+      g:"Tracing has to be in from the start — retrofitting propagation through async boundaries and queues is the painful part." },
+    { t:"Alerting", tier:"core",
+      s:"Paging on symptoms users feel (error rate, latency, saturation) rather than on causes.",
+      q:"Is this worth waking somebody for?",
+      g:"Every alert nobody acts on trains the team to ignore alerts. Alert fatigue causes outages." },
+    { t:"Capacity planning & load testing", tier:"core",
+      s:"Measuring where the system breaks before traffic finds out, and keeping headroom for the peak plus a failed region.",
+      q:"At what load does this fall over?",
+      g:"Testing a single service tells you little — the failure is usually the interaction, or a shared dependency you did not include." },
+    { t:"Deployment strategies", tier:"core",
+      s:"Blue-green, rolling, canary and feature flags — ways to change production without a synchronised leap.",
+      q:"How do I roll this back in one minute?",
+      g:"A deploy you cannot reverse is an outage you cannot end. Canary without automated metric-based abort is just a slower deploy." },
+    { t:"Zero-downtime schema migrations", tier:"deep",
+      s:"Expand, migrate, contract: add the new shape, backfill, dual-write, switch reads, then remove the old.",
+      q:"How do I change the schema while the old code is still running?",
+      g:"Old and new code run simultaneously during every deploy. Any migration assuming otherwise breaks in the window." },
+    { t:"Chaos engineering", tier:"deep",
+      s:"Injecting failure — killed instances, added latency, dropped packets — deliberately, to find out what actually happens.",
+      q:"Do my failure assumptions survive contact with reality?",
+      g:"Start in staging with a hypothesis and a stop button. Chaos without observability just produces a mystery outage." },
+    { t:"Incident response & postmortems", tier:"deep",
+      s:"Runbooks, on-call rotations, incident command, and blameless write-ups that produce changes rather than blame.",
+      q:"Who does what in the first ten minutes?",
+      g:"An action item with no owner and no date is a note. The organisational failure is usually more expensive than the technical one." }
+  ]
+},
+{
+  emoji: "🔌", title: "Communication & architecture", short: "Comms",
+  question: "The system is many services now. How do they <em>talk</em>, and where do the boundaries go?",
+  topics: [
+    { t:"Monolith, modular monolith, microservices", tier:"core",
+      s:"One deployable, one deployable with enforced internal boundaries, or many independently deployable services.",
+      q:"Is my bottleneck the machine, or the number of teams?",
+      g:"Microservices trade an in-process call for a network call that can fail, and buy team autonomy with operational complexity. Start with the modular monolith." },
+    { t:"Service boundaries", tier:"deep",
+      s:"Splitting along business capabilities and data ownership so each service owns its store and its decisions.",
+      q:"Where is the seam that does not need a transaction across it?",
+      g:"Two services sharing one database are one service with extra latency. Boundaries drawn on technical layers always leak." },
+    { t:"API gateway", tier:"core",
+      s:"A single entry point handling routing, authentication, rate limiting, and request aggregation.",
+      q:"Where do the cross-cutting concerns live?",
+      g:"Business logic creeping into the gateway recreates the monolith, in the most critical component, with no tests." },
+    { t:"Backend for frontend (BFF)", tier:"deep",
+      s:"A per-client tailored API layer, so mobile and web can have different shapes without contorting the services behind.",
+      q:"Should mobile and web share one API?",
+      g:"Each BFF is another deployable to keep in step. Worth it when clients genuinely diverge, wasteful when they do not." },
+    { t:"Service discovery", tier:"core",
+      s:"How a service finds a healthy instance of another — a registry, DNS, or the platform's own mechanism.",
+      q:"How does service A know where service B is right now?",
+      g:"Hard-coded addresses survive right up until the first autoscale event. The registry itself must not be a SPOF." },
+    { t:"Service mesh & sidecars", tier:"deep",
+      s:"Moving retries, mTLS, tracing and traffic-shifting out of the application into a proxy beside every instance.",
+      q:"Can the platform handle reliability so applications do not have to?",
+      g:"A mesh adds a hop, a memory footprint and a very deep debugging stack. Justify it with scale, not fashion." },
+    { t:"REST", tier:"core",
+      s:"Resources, HTTP verbs, status codes and statelessness — the boring default that everything can consume.",
+      q:"Is a plain resource API enough?",
+      g:"Over-fetching and chatty clients are the real costs. And PUT is idempotent by contract — implement it that way." },
+    { t:"GraphQL", tier:"deep",
+      s:"A single endpoint where the client specifies exactly the shape it wants, resolved across several sources.",
+      q:"Do clients need wildly different slices of the same graph?",
+      g:"Caching gets hard and one innocent query can trigger an N+1 explosion. Query depth and cost limits are mandatory." },
+    { t:"gRPC & protobuf", tier:"core",
+      s:"Binary, schema-first RPC over HTTP/2 with generated clients and streaming — the usual choice service-to-service.",
+      q:"Is this an internal, high-volume, latency-sensitive call?",
+      g:"Not natively browser-friendly, and the schema is a contract you must evolve additively — never reuse a field number." },
+    { t:"WebSocket", tier:"core",
+      s:"A persistent bidirectional connection over one upgraded HTTP handshake — chat, presence, live updates.",
+      q:"Does the server need to speak first, often?",
+      g:"Persistent connections are state: they pin users to a server, complicate deploys, and cap out on file descriptors." },
+    { t:"SSE, long polling & short polling", tier:"core",
+      s:"Three cheaper alternatives to sockets: server-sent events for one-way streams, long polling for near-real-time, short polling for simplicity.",
+      q:"How fresh does this need to be, and which way does data flow?",
+      g:"Polling wastes most requests; long polling ties up a connection per client. Pick the simplest thing that meets the freshness requirement." },
+    { t:"Push vs pull", tier:"core",
+      s:"The server sends when something happens, or the client asks periodically. Freshness against load and complexity.",
+      q:"Who initiates?",
+      g:"Push requires knowing every recipient and handling ones that are offline; pull scales trivially and is always a bit stale." },
+    { t:"Pagination", tier:"core",
+      s:"Offset/limit for simple cases, cursor (keyset) pagination for large or live datasets.",
+      q:"How do I return a million rows, twenty at a time?",
+      g:"OFFSET 1000000 makes the database count a million rows every time, and items shift under the reader as the list changes. Cursors fix both." },
+    { t:"API versioning & compatibility", tier:"core",
+      s:"Evolving a contract without breaking existing callers: additive changes, explicit versions, deprecation windows.",
+      q:"How do I change this without breaking the mobile app from 2023?",
+      g:"You cannot force clients to upgrade. Every field you ship is a field you may have to support for years." },
+    { t:"Serialisation formats", tier:"deep",
+      s:"JSON for reach and debuggability, protobuf/Avro/Thrift for size and speed, with a schema registry to keep everyone honest.",
+      q:"How much do bytes and parse time cost here?",
+      g:"Binary formats are unreadable in a log and unforgiving when schemas drift. That is the trade you are making." },
+    { t:"Idempotency keys at the boundary", tier:"core",
+      s:"A client-supplied key that lets a public API safely absorb a retried request.",
+      q:"What happens when the client retries a payment after a timeout?",
+      g:"The client cannot tell 'never arrived' from 'succeeded but the response was lost'. Without a key, only they know — and they don't." }
+  ]
+},
+{
+  emoji: "🔐", title: "Security & tenancy", short: "Security",
+  question: "Real users, real data, real attackers. Who is allowed to <em>see</em> and <em>do</em> what?",
+  topics: [
+    { t:"Authentication vs authorisation", tier:"core",
+      s:"AuthN establishes who you are; AuthZ decides what you may do. Two separate problems, often conflated.",
+      q:"Who is this, and are they allowed?",
+      g:"Checking identity at the gateway and never checking permission at the service is how one endpoint exposes everyone's data." },
+    { t:"Sessions vs tokens (JWT)", tier:"core",
+      s:"Server-side sessions are revocable and require a lookup; self-contained tokens scale statelessly and cannot easily be withdrawn.",
+      q:"Do I need instant revocation?",
+      g:"A JWT is valid until it expires — 'log out everywhere' needs short lifetimes plus a refresh flow or a deny list." },
+    { t:"OAuth 2.0 & OIDC", tier:"core",
+      s:"Delegated authorisation and an identity layer on top: authorisation code flow with PKCE, scopes, access and refresh tokens.",
+      q:"How does a third party act on a user's behalf without their password?",
+      g:"OAuth is authorisation; OIDC is the authentication part people assume OAuth already gave them." },
+    { t:"Signed requests & API keys", tier:"deep",
+      s:"HMAC signatures over the request with a timestamp and nonce, for machine-to-machine calls and webhook verification.",
+      q:"How does the receiver know this really came from us?",
+      g:"Without a timestamp and nonce, a valid signed request can simply be replayed." },
+    { t:"TLS & encryption in transit", tier:"core",
+      s:"TLS everywhere, including inside the perimeter; mTLS when both ends must prove identity.",
+      q:"Is anything travelling in the clear, even internally?",
+      g:"Certificate expiry is one of the most common self-inflicted outages there is. Automate renewal and alert well ahead." },
+    { t:"Encryption at rest & key management", tier:"core",
+      s:"Disk, field and envelope encryption, with keys in a KMS and a rotation story.",
+      q:"What does an attacker get from a stolen disk or a leaked backup?",
+      g:"Encryption at rest with the key next to the data protects against theft of hardware and almost nothing else." },
+    { t:"Secrets management", tier:"deep",
+      s:"Credentials in a vault with short leases and audited access, injected at runtime rather than baked into images.",
+      q:"Where do the database passwords come from?",
+      g:"A secret in git stays in git history forever. Rotation is the part everyone skips until an incident." },
+    { t:"DDoS protection & WAF", tier:"core",
+      s:"Absorbing volumetric attacks at the edge, filtering malicious patterns, and rate limiting per identity.",
+      q:"What happens when the traffic is hostile rather than popular?",
+      g:"Application-layer attacks look exactly like real traffic. Anycast plus per-identity limits beats blanket IP blocking." },
+    { t:"Input validation & injection", tier:"core",
+      s:"Parameterised queries, output encoding, allow-lists, and validating on the server no matter what the client did.",
+      q:"What if this input is hostile?",
+      g:"Client-side validation is user experience, not security. Anything reachable is reachable directly." },
+    { t:"Multi-tenancy", tier:"deep",
+      s:"Shared database with a tenant column, schema per tenant, or database per tenant — isolation against cost and operational load.",
+      q:"How strictly must tenants be kept apart?",
+      g:"One missing tenant filter in one query leaks everything. Enforce it in a layer that cannot be forgotten, not by convention." },
+    { t:"PII, GDPR & data residency", tier:"deep",
+      s:"Knowing where personal data lives, honouring deletion, and keeping regulated data in the right jurisdiction.",
+      q:"Can I actually delete one user, everywhere?",
+      g:"'Delete my account' has to reach backups, caches, search indexes, logs and the analytics warehouse. Design for it early or not at all." },
+    { t:"Audit logs", tier:"deep",
+      s:"An append-only, tamper-evident record of who did what to which resource, and when.",
+      q:"Could I reconstruct what happened, six months later?",
+      g:"Audit logs full of personal data become their own compliance problem. Log the actor and the action, not the payload." }
+  ]
+},
+{
+  emoji: "🏁", title: "Putting it together", short: "Practice",
+  question: "You know the parts. Can you <em>assemble</em> them, out loud, in 45 minutes?",
+  topics: [
+    { t:"The four-step framework", tier:"core",
+      s:"Understand and scope (5 min) → high-level design (15) → deep dive on the hard parts (15) → wrap up with bottlenecks and next steps (5).",
+      q:"How do I spend the time?",
+      g:"Diving into the interesting deep dive first is the most common failure. Get agreement on the box diagram before you optimise anything in it." },
+    { t:"Scope before depth", tier:"core",
+      s:"Agree the requirements, the scale and the boundaries out loud, and write them where both of you can see.",
+      q:"Are we designing the same system?",
+      g:"Silent assumptions are found in minute 40 of a 45-minute conversation. State them as you make them." },
+    { t:"Drawing the diagram", tier:"core",
+      s:"Client, edge, service tier, data tier, cache, queue — a legible box drawing you can then attack.",
+      q:"Can someone else read this in ten seconds?",
+      g:"A diagram with no arrow labels hides every interesting decision. Label the protocol and the direction." },
+    { t:"Reasoning about trade-offs aloud", tier:"core",
+      s:"Naming both options, choosing one, and saying what it costs — the actual thing being assessed.",
+      q:"Why this and not the obvious alternative?",
+      g:"A confident answer with no stated cost reads as inexperience. 'It depends' with no decision reads as evasion." },
+    { t:"Identifying bottlenecks", tier:"core",
+      s:"Walking the request path and asking what saturates first at 10× the load — and what you would do about it.",
+      q:"What breaks when this succeeds?",
+      g:"The bottleneck moves after every fix. Say where it moves to." },
+    { t:"The classic catalogue", tier:"core",
+      s:"URL shortener, chat, news feed, video streaming, notifications, distributed cache, web crawler, autocomplete, Google Drive, ticket booking, payments.",
+      q:"Have I built one of each shape at least once?",
+      g:"They recombine the same dozen patterns. Once you have done six, the seventh is mostly assembly." },
+    { t:"Your own design catalogue", tier:"core",
+      s:"Writing each design up in the same structure so they can be compared, revisited and improved over time.",
+      q:"Where does what I learnt actually go?",
+      g:"A design you cannot re-read in six months was practice, not a reference.",
+      x:[["The designs in this repo","https://github.com/mhayk/system-design/tree/main/designs"],["The repository README","https://github.com/mhayk/system-design"]] },
+    { t:"Building the thing", tier:"deep",
+      s:"Implementing the algorithm you designed — the fastest way to find the misunderstanding you did not know you had.",
+      q:"Would it actually work?",
+      g:"Reading about a rate-limiting algorithm and implementing it are different activities. The second one is where the book turns out to be wrong.",
+      x:[["Rate limiter simulator","https://github.com/mhayk/system-design/tree/main/designs/02-rate-limiter/simulator"]] }
+  ]
+}
+];
+
+/* ------------------------------------------------------------------ */
+
+const KEY = "sd-map.progress.v1";
+const $ = (s, r = document) => r.querySelector(s);
+
+let done = new Set();
+try { done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch { /* first run */ }
+
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...done])); } catch { /* private mode */ } };
+
+// Stable ids survive re-ordering of the list but not renaming — good enough,
+// and it means a renamed topic is one you should look at again anyway.
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+MAP.forEach((b, bi) => {
+  b.i = bi;
+  b.id = "s" + bi;
+  b.topics.forEach(t => { t.id = bi + ":" + slug(t.t); t.branch = b; });
+});
+const ALL = MAP.flatMap(b => b.topics);
+
+let filter = { q: "", tier: "all", state: "all" };
+
+/* ---------- build ---------- */
+const map = $("#map"), rail = $("#rail");
+
+function ring(pct) {
+  const r = 7, c = 2 * Math.PI * r;
+  return `<svg class="ring" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+    <circle class="track" cx="9" cy="9" r="${r}"></circle>
+    <circle class="fill" cx="9" cy="9" r="${r}"
+      stroke-dasharray="${(c * pct).toFixed(2)} ${c.toFixed(2)}"
+      transform="rotate(-90 9 9)" stroke-linecap="round"></circle>
+  </svg>`;
+}
+
+MAP.forEach(b => {
+  const a = document.createElement("a");
+  a.href = "#" + b.id;
+  a.style.setProperty("--accent", `var(--a${b.i})`);
+  a.dataset.branch = b.i;
+  a.innerHTML = `${ring(0)}<span class="num">${String(b.i).padStart(2, "0")}</span><span>${b.short}</span>`;
+  rail.append(a);
+
+  const sec = document.createElement("section");
+  sec.className = "branch";
+  sec.id = b.id;
+  sec.style.setProperty("--accent", `var(--a${b.i})`);
+  sec.innerHTML = `
+    <div class="b-head">
+      <span class="emoji">${b.emoji}</span>
+      <h2 class="b-title"><span class="num">${String(b.i).padStart(2, "0")}</span>${b.title}</h2>
+      <span class="b-count" data-count></span>
+    </div>
+    <p class="b-q">${b.question}</p>
+    <div class="chips"></div>`;
+  const chips = $(".chips", sec);
+  b.topics.forEach(t => {
+    const c = document.createElement("button");
+    c.className = "chip";
+    c.type = "button";
+    c.dataset.id = t.id;
+    c.dataset.tier = t.tier;
+    c.innerHTML = `<span class="box" aria-hidden="true">✓</span><span class="label">${t.t}</span>`;
+    t.el = c;
+    chips.append(c);
+  });
+  b.el = sec;
+  map.append(sec);
+});
+
+/* ---------- render ---------- */
+function matches(t) {
+  if (filter.tier !== "all" && t.tier !== filter.tier) return false;
+  const d = done.has(t.id);
+  if (filter.state === "todo" && d) return false;
+  if (filter.state === "done" && !d) return false;
+  if (filter.q) {
+    const hay = (t.t + " " + t.s + " " + t.q + " " + t.g + " " + t.branch.title).toLowerCase();
+    if (!hay.includes(filter.q)) return false;
+  }
+  return true;
+}
+
+function render() {
+  let visible = 0;
+  const nextUp = ALL.find(t => t.tier === "core" && !done.has(t.id));
+
+  MAP.forEach(b => {
+    let shown = 0, d = 0;
+    b.topics.forEach(t => {
+      const ok = matches(t);
+      t.el.hidden = !ok;
+      if (ok) shown++;
+      const isDone = done.has(t.id);
+      if (isDone) d++;
+      t.el.dataset.done = isDone ? "1" : "0";
+      t.el.classList.toggle("hit", !!filter.q && ok);
+      t.el.classList.toggle("next", t === nextUp);
+      t.el.setAttribute("aria-pressed", String(isDone));
+    });
+    visible += shown;
+    b.el.classList.toggle("empty", shown === 0);
+    $("[data-count]", b.el).textContent = `${d}/${b.topics.length}`;
+    const pct = d / b.topics.length;
+    const railLink = rail.querySelector(`a[data-branch="${b.i}"]`);
+    const c = 2 * Math.PI * 7;
+    railLink.querySelector(".fill").setAttribute("stroke-dasharray", `${(c * pct).toFixed(2)} ${c.toFixed(2)}`);
+  });
+
+  $("#nohits").dataset.show = visible === 0 ? "1" : "0";
+
+  const total = ALL.length, d = ALL.filter(t => done.has(t.id)).length;
+  const core = ALL.filter(t => t.tier === "core");
+  $("#total").textContent = total;
+  $("#donecount").textContent = d;
+  $("#coretotal").textContent = core.length;
+  $("#coredone").textContent = core.filter(t => done.has(t.id)).length;
+  const pct = total ? Math.round((d / total) * 100) : 0;
+  $("#pct").textContent = pct + "%";
+  $("#barfill").style.width = pct + "%";
+}
+
+/* ---------- drawer ---------- */
+let current = null;
+
+function openTopic(t) {
+  current = t;
+  const b = t.branch;
+  $("#drawer").style.setProperty("--accent", `var(--a${b.i})`);
+  $("#dkicker").textContent = `${String(b.i).padStart(2, "0")} · ${b.title}`;
+  $("#dtitle").textContent = t.t;
+  $("#dtier").textContent = t.tier === "core"
+    ? "core — learn this on the first pass"
+    : "◇ deep — come back for this one";
+  $("#dsummary").textContent = t.s;
+  $("#dq").textContent = t.q;
+  $("#dg").textContent = t.g;
+
+  const links = $("#dlinks");
+  links.innerHTML = "";
+  if (t.x && t.x.length) {
+    $("#dlinkwrap").hidden = false;
+    t.x.forEach(([label, href]) => {
+      const a = document.createElement("a");
+      a.href = href;
+      a.textContent = label;
+      if (/^https?:/.test(href)) { a.target = "_blank"; a.rel = "noopener"; }
+      links.append(a);
+    });
+  } else {
+    $("#dlinkwrap").hidden = true;
+  }
+
+  $("#dtoggle").textContent = done.has(t.id) ? "Mark as not learnt" : "Mark as learnt";
+  $("#drawer").dataset.open = "1";
+  $("#drawer").setAttribute("aria-hidden", "false");
+  $("#scrim").dataset.open = "1";
+  $("#drawer").focus();
+}
+
+function closeDrawer() {
+  $("#drawer").dataset.open = "0";
+  $("#drawer").setAttribute("aria-hidden", "true");
+  $("#scrim").dataset.open = "0";
+  current?.el.focus();
+}
+
+function toggle(t) {
+  if (done.has(t.id)) done.delete(t.id); else done.add(t.id);
+  save();
+  render();
+  if (current === t) $("#dtoggle").textContent = done.has(t.id) ? "Mark as not learnt" : "Mark as learnt";
+}
+
+/* ---------- events ---------- */
+map.addEventListener("click", e => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  const t = ALL.find(x => x.id === chip.dataset.id);
+  // The tick box toggles in place; the label opens the detail. Two targets,
+  // because reviewing (ticking fast) and learning (reading) are different modes.
+  if (e.target.closest(".box")) toggle(t); else openTopic(t);
+});
+
+$("#scrim").addEventListener("click", closeDrawer);
+$("#dclose").addEventListener("click", closeDrawer);
+$("#dtoggle").addEventListener("click", () => current && toggle(current));
+$("#dnext").addEventListener("click", () => {
+  const pool = ALL.filter(matches);
+  const i = pool.indexOf(current);
+  const n = pool[i + 1] ?? pool[0];
+  if (n) { openTopic(n); n.el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+});
+
+$("#q").addEventListener("input", e => { filter.q = e.target.value.trim().toLowerCase(); render(); });
+
+document.querySelectorAll(".seg button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const group = btn.parentElement;
+    group.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", "false"));
+    btn.setAttribute("aria-pressed", "true");
+    if (btn.dataset.tier) filter.tier = btn.dataset.tier;
+    if (btn.dataset.state) filter.state = btn.dataset.state;
+    render();
+  });
+});
+
+$("#next").addEventListener("click", () => {
+  const t = ALL.find(x => x.tier === "core" && !done.has(x.id));
+  if (!t) { alert("Every core topic is ticked. Switch the filter to deep ◇."); return; }
+  t.el.scrollIntoView({ block: "center", behavior: "smooth" });
+  openTopic(t);
+});
+
+$("#reset").addEventListener("click", () => {
+  if (!confirm("Clear all progress on this map?")) return;
+  done.clear(); save(); render();
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeDrawer();
+  if (e.key === "/" && document.activeElement !== $("#q")) { e.preventDefault(); $("#q").focus(); }
+});
+
+render();
+</script>
+
+</body>
+</html>
