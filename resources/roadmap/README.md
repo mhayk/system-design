@@ -6,10 +6,10 @@ Most system design material is a list. A list tells you *what* exists; it does n
 
 **162 topics across 10 stages.** 112 are marked *core* — the first pass. The other 50 are marked ◇ *deep*: real, worth knowing, and safely postponed until the core is solid.
 
-> **▶ [Open the interactive map](./index.html)** — tick what you know, filter to what you don't, click any topic for what it is, the question it answers, and where it bites. Progress is saved in your browser.
+> **▶ [Open the interactive map ↗](https://roadmap.mhayk.workers.dev/)** — tick what you know, filter to what you don't, click any topic for what it is, the question it answers, and where it bites. Progress is saved in your browser.
 >
-> It is a single self-contained HTML file: open it straight from disk, or deploy it with
-> `npx wrangler deploy --config wrangler.roadmap.jsonc` (see [`wrangler.roadmap.jsonc`](../../wrangler.roadmap.jsonc)) to get it at `roadmap.mhayk.workers.dev`.
+> A single self-contained HTML file ([source](./index.html)), so it also opens straight from disk. Redeploy with
+> `npx wrangler deploy --config wrangler.roadmap.jsonc` (see [`wrangler.roadmap.jsonc`](../../wrangler.roadmap.jsonc)).
 
 ---
 
