@@ -15,68 +15,76 @@ Most system design material is a list. A list tells you *what* exists; it does n
 
 ## 🗺️ The whole thing in one picture
 
+Read it top to bottom — that is the journey. Each stage exists because the one above it created a problem.
+
 ```mermaid
 ---
 config:
   look: handDrawn
+  layout: elk
   theme: neutral
 ---
-mindmap
-  root((System Design))
-    00 Foundations
-      Functional vs non-functional requirements
-      Estimation — QPS, storage, bandwidth
-      Latency numbers
-      Percentiles and the nines
-    01 Web tier
-      Vertical vs horizontal scaling
-      Load balancers — L4, L7, algorithms
-      Stateless tier and sessions
-      SPOF, redundancy, failover
-      Multi-region and autoscaling
-    02 Data
-      SQL vs NoSQL
-      Replication and lag
-      Sharding and partition keys
-      Hotspots and resharding
-      Backups, search, geospatial
-    03 Caching
-      Cache-aside, read-through, write-through
-      TTL, eviction, invalidation
-      Stampede and hot keys
-      CDN and HTTP cache headers
-    04 Async messaging
-      Message queue vs publish-subscribe
-      Partitions, ordering, consumer groups
-      Delivery semantics and idempotency
-      Retries, backoff, dead letter queues
-      Fan-out, EDA, outbox, saga, CQRS
-    05 Theory
-      CAP and PACELC
-      Consistency models
-      Consensus, quorum, leader election
-      Clocks, split brain, unique IDs
-    06 Reliability
-      Timeouts, retries, circuit breakers
-      Load shedding and rate limiting
-      SLI, SLO, error budgets
-      Observability and tracing
-      Deploys, migrations, chaos
-    07 Communication
-      Monolith vs microservices
-      REST, gRPC, GraphQL
-      WebSocket, SSE, polling
-      Gateways, discovery, versioning
-    08 Security
-      AuthN vs AuthZ, OAuth, JWT
-      Encryption in transit and at rest
-      DDoS, WAF, input validation
-      Multi-tenancy, PII, audit
-    09 Practice
-      The four-step framework
-      Trade-offs out loud
-      The classic catalogue
-      Build the thing
+flowchart TB
+
+  subgraph S0["00 · Foundations"]
+    direction LR
+    a1["Functional vs<br/>non-functional"] ~~~ a2["Estimation<br/>QPS · storage"] ~~~ a3["Latency<br/>numbers"] ~~~ a4["Percentiles<br/>and the nines"]
+  end
+
+  subgraph S1["01 · Scaling the web tier"]
+    direction LR
+    b1["Vertical vs<br/>horizontal"] ~~~ b2["Load balancers<br/>L4 · L7"] ~~~ b3["Stateless tier<br/>and sessions"] ~~~ b4["SPOF · redundancy<br/>failover"] ~~~ b5["Multi-region<br/>autoscaling"]
+  end
+
+  subgraph S2["02 · The data tier"]
+    direction LR
+    c1["SQL vs NoSQL"] ~~~ c2["Replication<br/>and lag"] ~~~ c3["Sharding and<br/>partition keys"] ~~~ c4["Hotspots and<br/>resharding"] ~~~ c5["Backups · search<br/>geospatial"]
+  end
+
+  subgraph S3["03 · Caching and delivery"]
+    direction LR
+    d1["Cache-aside<br/>write-through"] ~~~ d2["TTL · eviction<br/>invalidation"] ~~~ d3["Stampede and<br/>hot keys"] ~~~ d4["CDN and<br/>cache headers"]
+  end
+
+  subgraph S4["04 · Asynchronous messaging"]
+    direction LR
+    e1["Queue vs<br/>publish-subscribe"] ~~~ e2["Partitions · ordering<br/>consumer groups"] ~~~ e3["Delivery semantics<br/>idempotency"] ~~~ e4["Retries · backoff<br/>dead letter queues"] ~~~ e5["Fan-out · EDA<br/>outbox · saga"]
+  end
+
+  subgraph S5["05 · Distributed systems theory"]
+    direction LR
+    f1["CAP and<br/>PACELC"] ~~~ f2["Consistency<br/>models"] ~~~ f3["Consensus · quorum<br/>leader election"] ~~~ f4["Clocks · split brain<br/>unique IDs"]
+  end
+
+  subgraph S6["06 · Reliability engineering"]
+    direction LR
+    g1["Timeouts · retries<br/>circuit breakers"] ~~~ g2["Load shedding<br/>rate limiting"] ~~~ g3["SLI · SLO<br/>error budgets"] ~~~ g4["Observability<br/>and tracing"] ~~~ g5["Deploys · migrations<br/>chaos"]
+  end
+
+  subgraph S7["07 · Communication and architecture"]
+    direction LR
+    h1["Monolith vs<br/>microservices"] ~~~ h2["REST · gRPC<br/>GraphQL"] ~~~ h3["WebSocket · SSE<br/>polling"] ~~~ h4["Gateways · discovery<br/>versioning"]
+  end
+
+  subgraph S8["08 · Security and tenancy"]
+    direction LR
+    i1["AuthN vs AuthZ<br/>OAuth · JWT"] ~~~ i2["Encryption in<br/>transit and at rest"] ~~~ i3["DDoS · WAF<br/>input validation"] ~~~ i4["Multi-tenancy<br/>PII · audit"]
+  end
+
+  subgraph S9["09 · Putting it together"]
+    direction LR
+    j1["The four-step<br/>framework"] ~~~ j2["Trade-offs<br/>out loud"] ~~~ j3["The classic<br/>catalogue"] ~~~ j4["Build<br/>the thing"]
+  end
+
+  S0 -->|"one server is slow<br/>and dies alone"| S1
+  S1 -->|"the database is<br/>now the bottleneck"| S2
+  S2 -->|"the same reads<br/>keep repeating"| S3
+  S3 -->|"the request blocks on<br/>work it need not wait for"| S4
+  S4 -->|"many machines now<br/>and the network lies"| S5
+  S5 -->|"so failure is<br/>the steady state"| S6
+  S6 -->|"and the system<br/>became many services"| S7
+  S7 -->|"with real users<br/>and real attackers"| S8
+  S8 -->|"now assemble it<br/>in 45 minutes"| S9
 ```
 
 ---
